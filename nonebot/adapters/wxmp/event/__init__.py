@@ -1,4 +1,3 @@
-from .all import *
 from .base import *
 from .offical import *
 from .miniprogram import *
