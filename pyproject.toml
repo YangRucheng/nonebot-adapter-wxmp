@@ -1,0 +1,9 @@
+[project]
+name = "nonebot-adapter-wxmp"
+version = "0.0.1"
+description = "Nonebot Adapter for Weixin Official Accounts Platform"
+authors = [{ name = "YangRucheng", email = "admin@yangrucheng.top" }]
+dependencies = ["nonebot2>=2.2.1", "xmltodict>=0.14.0"]
+requires-python = ">=3.10"
+readme = "README.md"
+license = { text = "AGPLv3" }
