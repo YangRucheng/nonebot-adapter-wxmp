@@ -97,6 +97,14 @@ class Adapter(BaseAdapter):
         )
         self.setup_http_server(http_setup)
 
+        http_setup = HTTPServerSetup(
+            URL(f"/wxmp/revice"),
+            "POST",
+            f"{self.get_name()} Root Event",
+            self._handle_event,
+        )
+        self.setup_http_server(http_setup)
+
     @classmethod
     def parse_body(cls, data: str) -> dict:
         try:
@@ -116,6 +124,9 @@ class Adapter(BaseAdapter):
         signature = url.query.get("signature", "")
 
         bot: Bot = self.bots.get(self._get_appid(url.path), None)
+
+        if not bot:
+            return Response(200, content="success")
 
         if request.content:
             concat_string: str = ''.join(sorted([bot.bot_info.token, timestamp, nonce]))

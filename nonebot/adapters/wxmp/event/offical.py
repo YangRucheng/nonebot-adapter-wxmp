@@ -48,9 +48,9 @@ class AuthorizationChangeEvent(OfficalAccountEvent):
     """ 消息类型 `MsgType` """
     event: Literal["user_authorization_revoke"] = Field(alias="Event")
     """ 事件类型 `Event` """
-    openid: str = Field(alias="OpenId")
-    """ 用户 OpenId `OpenId` """
-    appid: str = Field(alias="AppId")
-    """ 公众号/小程序 AppId `AppId` """
+    openid: str = Field(alias="OpenID")
+    """ 用户 OpenID `OpenID """
+    appid: str = Field(alias="AppID")
+    """ 公众号/小程序 AppID `AppID` """
     revoke_info: str = Field(alias="RevokeInfo")
     """ 取消授权的数据类型 `RevokeInfo` """

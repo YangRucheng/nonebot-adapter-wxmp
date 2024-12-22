@@ -21,6 +21,7 @@ class Event(BaseEvent):
     """ 消息发送时间戳 `CreateTime` """
     message_type: str = Field(alias="MsgType")
     """ 消息类型 `MsgType` """
+    event: Optional[str] = Field(default=None, alias="Event")
 
     def handle_origin_data(self):
         """ 处理原始数据 """
