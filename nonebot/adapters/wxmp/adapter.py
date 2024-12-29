@@ -41,6 +41,11 @@ from nonebot.drivers import (
     HTTPServerSetup,
     WebSocketServerSetup
 )
+from nonebot.exception import (
+    ActionFailed,
+    NetworkError,
+    ApiNotAvailable,
+)
 
 
 log = logger_wrapper("WXMP")
@@ -177,7 +182,25 @@ class Adapter(BaseAdapter):
         """ 从链接中获取 Bot 配置 """
         return path.split('/')[-1]
 
-    @override
     async def _call_api(self, bot: Bot, api: str, **data: Any) -> Any:
         """ 调用微信公众平台 API """
-        await bot.call_api(api, **data)
+        access_token = await bot._get_access_token()
+        request = Request(
+            method="POST",
+            url=f"https://api.weixin.qq.com/cgi-bin{api}",
+            params={
+                "access_token": access_token,
+            },
+            headers={
+                'Content-type': 'application/json',
+            },
+            content=json.dumps(data, ensure_ascii=False).encode("utf-8"),
+        )
+        resp = await self.request(request)
+        if resp.status_code != 200 or not resp.content:
+            raise NetworkError(f"Call API {api} failed with status code {resp.status_code}.")
+        res: dict = json.loads(resp.content)
+        if res.get("errcode", 0) != 0:
+            log("ERROR", f"Call API {api} failed with error {res}")
+            raise ActionFailed()
+        return res
