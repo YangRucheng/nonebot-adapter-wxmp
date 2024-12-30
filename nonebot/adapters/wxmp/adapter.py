@@ -182,19 +182,23 @@ class Adapter(BaseAdapter):
         """ 从链接中获取 Bot 配置 """
         return path.split('/')[-1]
 
-    async def _call_api(self, bot: Bot, api: str, **data: Any) -> Any:
+    async def _call_api(self, bot: Bot, api: str, **data: Any) -> dict:
         """ 调用微信公众平台 API """
         access_token = await bot._get_access_token()
         request = Request(
-            method="POST",
+            method=data.get("method", "POST"),
             url=f"https://api.weixin.qq.com/cgi-bin{api}",
             params={
                 "access_token": access_token,
-            },
+            } | data.get("params", {}),
             headers={
                 'Content-type': 'application/json',
-            },
-            content=json.dumps(data, ensure_ascii=False).encode("utf-8"),
+            } | data.get("headers", {}),
+            content=json.dumps(
+                data.get("json", data.get("data", data.get("body", {}))),
+                ensure_ascii=False
+            ).encode("utf-8"),
+            files=data.get("files", None),
         )
         resp = await self.request(request)
         if resp.status_code != 200 or not resp.content:

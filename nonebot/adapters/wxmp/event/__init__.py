@@ -8,8 +8,11 @@ __all__ = [
     "MiniprogramEvent",
     "OfficalAccountEvent",
 
+    "UserEnterEvent",
+    "KfCloseSessionEvent",
     "AuthorizationChangeEvent",
     "MiniprogramMessageEvent",
+
     "OfficalAccountMessageEvent",
     "SubscribeEvent",
     "UnSubscribeEvent",

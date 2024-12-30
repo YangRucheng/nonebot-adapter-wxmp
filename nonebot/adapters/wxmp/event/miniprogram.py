@@ -32,3 +32,11 @@ class AuthorizationChangeEvent(MiniprogramEvent):
     """ 小程序 AppID `AppID` """
     revoke_info: str = Field(alias="RevokeInfo")
     """ 取消授权的数据类型 `RevokeInfo` """
+
+
+class KfCloseSessionEvent(MiniprogramEvent):
+    """ 客服关闭会话事件 """
+    message_type: Literal["event"] = Field(alias="MsgType")
+    event: Literal["kf_close_session"] = Field(alias="Event")
+    kf_account: str = Field(alias="KfAccount")
+    close_type: str = Field(alias="CloseType")
