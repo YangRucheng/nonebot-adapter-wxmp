@@ -39,6 +39,7 @@ from nonebot.drivers import (
     ASGIMixin,
     WebSocket,
     HTTPServerSetup,
+    HTTPClientMixin,
     WebSocketServerSetup
 )
 from nonebot.exception import (
@@ -72,6 +73,18 @@ class Adapter(BaseAdapter):
                 f"{self.get_name()} Adapter need a asgi server driver to work."
             )
 
+        if not isinstance(self.driver, HTTPClientMixin):
+            raise RuntimeError(
+                f"Current driver {self.config.driver} "
+                "doesn't support http client requests!"
+                f"{self.get_name()} Adapter needs a HTTPClient Driver to work."
+            )
+
+        self.driver.on_startup(self.startup)
+        self.driver.on_shutdown(self.shutdown)
+
+    async def startup(self) -> None:
+        """ 启动 Adapter """
         for bot_info in self.wxmp_config.wxmp_bots:
             http_setup = HTTPServerSetup(
                 URL(f"/wxmp/revice/{bot_info.appid}"),
@@ -109,6 +122,18 @@ class Adapter(BaseAdapter):
             self._handle_event,
         )
         self.setup_http_server(http_setup)
+
+    async def shutdown(self) -> None:
+        """ 关闭 Adapter """
+        for task in self.tasks:
+            if not task.done():
+                task.cancel()
+
+        await asyncio.gather(
+            *(asyncio.wait_for(task, timeout=10) for task in self.tasks),
+            return_exceptions=True,
+        )
+        self.tasks.clear()
 
     @classmethod
     def parse_body(cls, data: str) -> dict:
