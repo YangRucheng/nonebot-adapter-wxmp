@@ -36,6 +36,7 @@ from .message import Message, MessageSegment
 from nonebot import get_plugin_config
 from nonebot.drivers import (
     Request,
+    Response,
     ASGIMixin,
     WebSocket,
     HTTPServerSetup,
@@ -80,11 +81,6 @@ class Adapter(BaseAdapter):
                 f"{self.get_name()} Adapter needs a HTTPClient Driver to work."
             )
 
-        self.driver.on_startup(self.startup)
-        self.driver.on_shutdown(self.shutdown)
-
-    async def startup(self) -> None:
-        """ 启动 Adapter """
         for bot_info in self.wxmp_config.wxmp_bots:
             http_setup = HTTPServerSetup(
                 URL(f"/wxmp/revice/{bot_info.appid}"),
@@ -122,6 +118,8 @@ class Adapter(BaseAdapter):
             self._handle_event,
         )
         self.setup_http_server(http_setup)
+
+        self.driver.on_shutdown(self.shutdown)
 
     async def shutdown(self) -> None:
         """ 关闭 Adapter """
@@ -207,29 +205,22 @@ class Adapter(BaseAdapter):
         """ 从链接中获取 Bot 配置 """
         return path.split('/')[-1]
 
-    async def _call_api(self, bot: Bot, api: str, **data: Any) -> dict:
+    async def _call_api(self, bot: Bot, api: str, **data: Any) -> Response:
         """ 调用微信公众平台 API """
         access_token = await bot._get_access_token()
+        body: Any | None = data.get("json", data.get("data", data.get("body", None)))
+
         request = Request(
             method=data.get("method", "POST"),
             url=f"https://api.weixin.qq.com/cgi-bin{api}",
             params={
                 "access_token": access_token,
             } | data.get("params", {}),
-            headers={
-                'Content-type': 'application/json',
-            } | data.get("headers", {}),
-            content=json.dumps(
-                data.get("json", data.get("data", data.get("body", {}))),
-                ensure_ascii=False
-            ).encode("utf-8"),
+            headers=data.get("headers", {}),
+            content=json.dumps(body, ensure_ascii=False).encode("utf-8") if body else None,
             files=data.get("files", None),
         )
         resp = await self.request(request)
         if resp.status_code != 200 or not resp.content:
             raise NetworkError(f"Call API {api} failed with status code {resp.status_code}.")
-        res: dict = json.loads(resp.content)
-        if res.get("errcode", 0) != 0:
-            log("ERROR", f"Call API {api} failed with error {res}")
-            raise ActionFailed()
-        return res
+        return resp

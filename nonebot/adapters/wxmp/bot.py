@@ -1,6 +1,5 @@
 from typing import Union, Any, Optional, Type, TYPE_CHECKING, cast, Literal
 from typing_extensions import override
-import httpx
 import json
 import time
 
@@ -12,6 +11,10 @@ from nonebot.exception import (
     ActionFailed,
     NetworkError,
     ApiNotAvailable,
+)
+from nonebot.drivers import (
+    Request,
+    Response,
 )
 
 from .event import *
@@ -76,6 +79,15 @@ class Bot(BaseBot):
         self._access_token = res["access_token"]
         return self._access_token
 
+    async def call_json_api(self, api: str, **data: Any) -> dict:
+        """ 调用微信公众平台 Json API """
+        resp: Response = await self.call_api(api=api, **data)
+        res: dict = json.loads(resp.content)
+        if res.get("errcode", 0) != 0:
+            log("ERROR", f"Call API {api} failed with error {res}")
+            raise ActionFailed()
+        return res
+
     async def send_custom_message(self, user_id: str, message: Message):
         """ 发送 客服消息 """
         if isinstance(message, str):
@@ -88,7 +100,7 @@ class Bot(BaseBot):
         for segment in message:
             segment = cast(MessageSegment, segment)
             if segment.type == "text":
-                return await self.call_api(
+                return await self.call_json_api(
                     "/message/custom/send",
                     json={
                         "touser": user_id,
@@ -98,7 +110,7 @@ class Bot(BaseBot):
                 )
             elif segment.type == "image":
                 media_id = await self.upload_temp_media("image", segment.data["file"])
-                return await self.call_api(
+                return await self.call_json_api(
                     "/message/custom/send",
                     json={
                         "touser": user_id,
@@ -107,7 +119,7 @@ class Bot(BaseBot):
                     },
                 )
             elif segment.type == "link":
-                return await self.call_api(
+                return await self.call_json_api(
                     "/message/custom/send",
                     json={
                         "touser": user_id,
@@ -122,7 +134,7 @@ class Bot(BaseBot):
                 )
             elif segment.type == "miniprogrampage":
                 media_id = await self.upload_temp_media("image", segment.data["thumb_media"])
-                return await self.call_api(
+                return await self.call_json_api(
                     "/message/custom/send",
                     json={
                         "touser": user_id,
@@ -136,7 +148,7 @@ class Bot(BaseBot):
                 )
             elif segment.type == "voice":
                 media_id = await self.upload_temp_media("voice", segment.data["voice"])
-                return await self.call_api(
+                return await self.call_json_api(
                     "/message/custom/send",
                     json={
                         "touser": user_id,
@@ -150,51 +162,36 @@ class Bot(BaseBot):
                 raise NotImplementedError()
 
     async def upload_temp_media(self, type: Literal["image", "voice", "video", "thumb"], media: bytes) -> str:
-        """ 上传临时素材 
+        """ 上传临时素材
 
         小程序：仅支持 image
         公众号：支持 image, voice, video, thumb
         """
-        access_token = await self._get_access_token()
-        async with httpx.AsyncClient() as client:
-            resp = await client.post(
-                url=f"https://api.weixin.qq.com/cgi-bin/media/upload",
-                params={
-                    "access_token": access_token,
-                    "type": type,
-                },
-                files={
-                    "media": ("nonebot-upload-image.png", media, "image/png"),
-                },
-            )
-            if resp.status_code != 200:
-                raise NetworkError(
-                    f"Get media failed with status code {resp.status_code}."
-                )
-            res: dict = resp.json()
+        res = await self.call_json_api(
+            "/media/upload",
+            params={
+                "type": type,
+            },
+            files={
+                "media": ("nonebot-upload-image.png", media, "image/png"),
+            },
+        )
         log("INFO", f"Upload media: {res}")
         return res["media_id"]
 
     async def get_temp_media(self, media_id: str) -> bytes:
         """ 获取临时素材 """
-        access_token = await self._get_access_token()
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(
-                url=f"https://api.weixin.qq.com/cgi-bin/media/get",
-                params={
-                    "access_token": access_token,
-                    "media_id": media_id,
-                },
-            )
-            if resp.status_code != 200:
-                raise NetworkError(
-                    f"Get media failed with status code {resp.status_code}."
-                )
-            return resp.content
+        resp: Response = await self.call_api(
+            "/media/get",
+            params={
+                "media_id": media_id,
+            },
+        )
+        return resp.content
 
-    async def set_tpying(self, command: Literal["Typing", "CancelTyping"], user_id: str):
+    async def set_tpying(self, command: Literal["Typing", "CancelTyping"], user_id: str) -> dict:
         """ 设置用户输入状态 """
-        return await self.call_api(
+        return await self.call_json_api(
             "/message/custom/typing",
             json={
                 "touser": user_id,
