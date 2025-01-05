@@ -5,6 +5,7 @@ from yarl import URL
 import xmltodict
 import asyncio
 import hashlib
+import secrets
 import json
 import sys
 import re
@@ -29,9 +30,14 @@ from nonebot.adapters import Adapter as BaseAdapter
 
 from .bot import Bot
 from .event import *
+from .utils import log
 from .config import Config, BotInfo
 from .message import Message, MessageSegment
-
+from .exception import (
+    ActionFailed,
+    NetworkError,
+    ApiNotAvailable,
+)
 
 from nonebot import get_plugin_config
 from nonebot.drivers import (
@@ -43,14 +49,6 @@ from nonebot.drivers import (
     HTTPClientMixin,
     WebSocketServerSetup
 )
-from nonebot.exception import (
-    ActionFailed,
-    NetworkError,
-    ApiNotAvailable,
-)
-
-
-log = logger_wrapper("WXMP")
 
 
 class Adapter(BaseAdapter):
@@ -103,22 +101,6 @@ class Adapter(BaseAdapter):
                 )
                 self.setup_http_server(http_setup)
 
-        http_setup = HTTPServerSetup(
-            URL(f"/wxmp/revice"),
-            "GET",
-            f"{self.get_name()} Root Verify",
-            self._handle_verify,
-        )
-        self.setup_http_server(http_setup)
-
-        http_setup = HTTPServerSetup(
-            URL(f"/wxmp/revice"),
-            "POST",
-            f"{self.get_name()} Root Event",
-            self._handle_event,
-        )
-        self.setup_http_server(http_setup)
-
         self.driver.on_shutdown(self.shutdown)
 
     async def shutdown(self) -> None:
@@ -135,6 +117,7 @@ class Adapter(BaseAdapter):
 
     @classmethod
     def parse_body(cls, data: str) -> dict:
+        """ 解析微信公众平台的事件数据 """
         try:
             return json.loads(data)
         except json.JSONDecodeError:
@@ -154,12 +137,12 @@ class Adapter(BaseAdapter):
         bot: Bot = self.bots.get(self._get_appid(url.path), None)
 
         if not bot:
-            return Response(200, content="success")
+            return Response(404, content="Bot not found")
 
         if request.content:
             concat_string: str = ''.join(sorted([bot.bot_info.token, timestamp, nonce]))
             sha1_signature = hashlib.sha1(concat_string.encode('utf-8')).hexdigest()
-            if sha1_signature != signature:
+            if not secrets.compare_digest(sha1_signature, signature):
                 return Response(403, content="Invalid signature")
             else:
                 payload: dict = self.parse_body(request.content)
@@ -190,19 +173,19 @@ class Adapter(BaseAdapter):
 
         bot: Bot = self.bots.get(self._get_appid(url.path), None)
 
-        if not bot:  # 默认验证通过
-            return Response(200, content=echostr)
+        if not bot:
+            return Response(404, content="Bot not found")
 
         concat_string: str = ''.join(sorted([timestamp, nonce, bot.bot_info.token]))
         sha1_signature = hashlib.sha1(concat_string.encode('utf-8')).hexdigest()
 
-        if sha1_signature == signature:
+        if secrets.compare_digest(sha1_signature, signature):
             return Response(200, content=echostr)
         else:
             return Response(403, content="Invalid signature")
 
-    def _get_appid(self, path: str) -> BotInfo | None:
-        """ 从链接中获取 Bot 配置 """
+    def _get_appid(self, path: str) -> str:
+        """ 从链接中获取 Bot 的 AppID """
         return path.split('/')[-1]
 
     async def _call_api(self, bot: Bot, api: str, **data: Any) -> Response:
@@ -221,6 +204,8 @@ class Adapter(BaseAdapter):
             files=data.get("files", None),
         )
         resp = await self.request(request)
+
         if resp.status_code != 200 or not resp.content:
-            raise NetworkError(f"Call API {api} failed with status code {resp.status_code}.")
+            raise ActionFailed(retcode=resp.status_code, api=api, info=str(resp.content))
+
         return resp

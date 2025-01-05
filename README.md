@@ -56,21 +56,39 @@ WXMP_BOTS='
 + URL(服务器地址): `https://example.com/wxmp/revice/<app_id>`  
 + Token(令牌)：暂不支持，随意填  
 + 消息加密方式：明文模式  
-+ 数据格式：JSON  
++ 数据格式：JSON （公众号为XML）
 
-### 开发进度
+### 适配情况
 
-#### 小程序客服消息
+<div align="center">
 
-- [x] 文字消息
-- [x] 图片消息
-- [x] 图文链接
-- [x] 小程序卡片
-  
-#### 公众号客服消息
+|              | 小程序（事件推送） | 小程序（发送消息） | 公众号（事件推送） | 公众号（发送消息） |
+| ------------ | ------------------ | ------------------ | ------------------ | ------------------ |
+| 文字消息     | ✅                  | ✅                  | ✅                  | ✅                  |
+| 图片消息     | ✅                  | ✅                  | ✅                  | ✅                  |
+| 图文链接     | ✅                  | ✅                  | ✅                  | ❌                  |
+| 小程序卡片   | ✅                  | ✅                  | ❌                  |                    |
+| 语音消息     | ❌                  | ❌                  |                    |                    |
+| 音乐消息     | ❌                  | ❌                  | ❌                  |                    |
+| 视频消息     | ❌                  | ❌                  |                    |                    |
+| 小视频消息   | ❌                  | ❌                  |                    |                    |
+| 地理位置消息 | ❌                  | ❌                  |                    |                    |
 
-- [x] 文字消息
-- [x] 图片消息
-- [ ] 语音消息
-- [ ] 视频消息
-- [ ] 音乐消息
+</div>
+
+❌官方不支持 · ✅已适配 · 其他官方支持但暂未适配
+
+> 由于我没有已认证的 公众号/服务号，无法测试，如有问题请提 Issue！
+
+### 参考文档
+
+#### 微信开发文档
+
++ [公众号事件推送](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Receiving_standard_messages.html)
++ [公众号发送消息](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Service_Center_messages.html#客服接口-发消息)
++ [小程序事件推送]()
++ [小程序发送消息](https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/kf-mgnt/kf-message/sendCustomMessage.html)
+
+#### 其他补充信息
+
++ [不支持表情包](https://developers.weixin.qq.com/community/develop/doc/00000ee4eb8190937f227559f66c00)
