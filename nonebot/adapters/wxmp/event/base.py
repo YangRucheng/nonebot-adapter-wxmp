@@ -147,11 +147,14 @@ class MessageEvent(Event):
                 url=payload.get("Url"),
             )
         else:
-            # 暂不支持 video, shortvideo, location
+            # TODO video, shortvideo, location
             raise EventNotAvailable
 
-        self.original_message = Message([segm]) if segm else Message([])
-        self.message = self.original_message
+        self.message = Message([segm]) if segm else Message([])
+
+    @property
+    def original_message(self) -> Message:
+        return self.message
 
     @override
     def get_message(self) -> Message:
