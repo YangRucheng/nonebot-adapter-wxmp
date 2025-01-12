@@ -1,0 +1,117 @@
+{
+    "小程序": {
+        "用户进入客服会话": {
+            "ToUserName": "gh_e0e47fd2af64",
+            "FromUserName": "yangrucheng_mini_obMhd40cVqYcUC80yo",
+            "CreateTime": 1736668119,
+            "MsgType": "event",
+            "Event": "user_enter_tempsession",
+            "SessionFrom": ""
+        },
+        "文本消息": {
+            "ToUserName": "gh_e0e47fd2af64",
+            "FromUserName": "yangrucheng_mini_obMhd40cVqYcUC80yo",
+            "CreateTime": 1736668191,
+            "MsgType": "text",
+            "Content": "文本测试",
+            "MsgId": 24863107247798612
+        },
+        "图片消息": {
+            "ToUserName": "gh_e0e47fd2af64",
+            "FromUserName": "yangrucheng_mini_obMhd40cVqYcUC80yo",
+            "CreateTime": 1736668235,
+            "MsgType": "image",
+            "PicUrl": "http://mmbiz.qpic.cn/mmbiz_jpg/eEm3X2DKYGQvA6Hlkiax7c76NsOHcTRvS3yOaibEReeGFva5O6MibZyfLh7LBkgTLPmemeT7ziaHRyZ9MHpm88y42Q/0",
+            "MsgId": 24863114632253701,
+            "MediaId": "zLdhra8XmU2-7SNqPlWr4yYebdXQFbMuKvuDTXZO4cwHiHNlMhP86_t9BeHXqYVh"
+        },
+        "小程序卡片消息": {
+            "ToUserName": "gh_e0e47fd2af64",
+            "FromUserName": "yangrucheng_mini_obMhd40cVqYcUC80yo",
+            "CreateTime": 1736668937,
+            "MsgType": "miniprogrampage",
+            "MsgId": 24863122226762211,
+            "Title": "标题",
+            "AppId": "wx0ba7981861be3afc",
+            "PagePath": "pages/home/home",
+            "ThumbUrl": "http://mmbiz.qpic.cn/mmbiz_jpg/huy9UibRekiarAQMfEFmtfEvPPaKbk9IwgN9sTlkRG3ttgGk9ujvmhgWtMfqMTicfpKHYa4OTW0INmj0sw6604MXg/0",
+            "ThumbMediaId": "zLdhra8XmU2-7SNqPlWr42FmY7XXvWujjiAK06Xdcgmse3DYVs34dgUqM8DrmpYU"
+        },
+        "用户修改授权信息": {
+            "ToUserName": "gh_e0e47fd2af64",
+            "FromUserName": "obMhx7TxlE9Gc20jgAC5j3M383TQ",
+            "CreateTime": 1736669021,
+            "MsgType": "event",
+            "Event": "user_authorization_revoke",
+            "OpenID": "yangrucheng_mini_obMhd40cVqYcUC80yo",
+            "AppID": "wx0ba7981861be3afc",
+            "RevokeInfo": "13"
+        }
+    },
+    "公众号": {
+        "关注事件": {
+            "ToUserName": "gh_ad9b50679467",
+            "FromUserName": "yangrucheng_offical_obMhd40cVqYcUC80yo",
+            "CreateTime": "1736670621",
+            "MsgType": "event",
+            "Event": "subscribe",
+            "EventKey": null
+        },
+        "取消关注事件": {
+            "ToUserName": "gh_ad9b50679467",
+            "FromUserName": "yangrucheng_offical_obMhd40cVqYcUC80yo",
+            "CreateTime": "1736670589",
+            "MsgType": "event",
+            "Event": "unsubscribe",
+            "EventKey": null
+        },
+        "文本消息": {
+            "ToUserName": "gh_ad9b50679467",
+            "FromUserName": "yangrucheng_offical_obMhd40cVqYcUC80yo",
+            "CreateTime": "1736670151",
+            "MsgType": "text",
+            "Content": "测试文本",
+            "MsgId": "24863140378325023"
+        },
+        "图片消息": {
+            "ToUserName": "gh_ad9b50679467",
+            "FromUserName": "yangrucheng_offical_obMhd40cVqYcUC80yo",
+            "CreateTime": "1736670222",
+            "MsgType": "image",
+            "PicUrl": "http://mmbiz.qpic.cn/mmbiz_jpg/eEm3X2DKYGQvA6Hlkiax7c76NsOHcTRvS3yOaibEReeGFva5O6MibZyfLh7LBkgTLPmemeT7ziaHRyZ9MHpm88y42Q/0",
+            "MsgId": "24863137548145412",
+            "MediaId": "sRystCbE6Gjdt3h5GoB28k1QEquxy82Vc_Mp22J0IO-GQ6w5snF8fYe8c8rP328t"
+        },
+        "视频消息": {
+            "ToUserName": "gh_ad9b50679467",
+            "FromUserName": "yangrucheng_offical_obMhd40cVqYcUC80yo",
+            "CreateTime": "1736670283",
+            "MsgType": "video",
+            "MediaId": "sRystCbE6Gjdt3h5GoB28rpoU6VMYbuLcyf5O4skZWTIAyXST5a9ErGPeHZwYDnAJgsNUnlR_S3uPb8WbN-YxQ",
+            "ThumbMediaId": "sRystCbE6Gjdt3h5GoB28gcsEdsgml22gyvQHCE4_Vi58uEWFl0regEUifasx1e7",
+            "MsgId": "24863136866621374"
+        },
+        "位置消息": {
+            "ToUserName": "gh_ad9b50679467",
+            "FromUserName": "yangrucheng_offical_obMhd40cVqYcUC80yo",
+            "CreateTime": "1736670321",
+            "MsgType": "location",
+            "Location_X": "28.169680",
+            "Location_Y": "112.929260",
+            "Scale": "15",
+            "Label": "测试地址",
+            "MsgId": "24863144722024490"
+        },
+        "音频消息": {
+            "ToUserName": "gh_ad9b50679467",
+            "FromUserName": "yangrucheng_offical_obMhd40cVqYcUC80yo",
+            "CreateTime": "1736670466",
+            "MsgType": "voice",
+            "MediaId": "sRystCbE6Gjdt3h5GoB28tefdcj5-Y28Y9NQFvWZNhRAyyD4pVL8AmyvdO31AIJ_",
+            "Format": "amr",
+            "MsgId": "7458942855399079936",
+            "Recognition": null,
+            "MediaId16K": "sRystCbE6Gjdt3h5GoB28l8pLxA3A82rig2ILtfHPqDIUm9CRS7MbUlJxS80GzvO"
+        }
+    }
+}
