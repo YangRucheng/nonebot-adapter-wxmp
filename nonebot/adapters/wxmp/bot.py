@@ -1,5 +1,6 @@
 from typing import Union, Any, Optional, Type, TYPE_CHECKING, cast, Literal
 from typing_extensions import override
+from xmltodict import unparse
 from pathlib import Path
 import json
 import time
@@ -13,11 +14,11 @@ from nonebot.drivers import (
     Response,
 )
 
+from .event import *
 from .file import File
 from .utils import log
-from .event import Event
 from .config import BotInfo
-from .exception import ActionFailed
+from .exception import ActionFailed, OfficialReplyError
 from .message import (
     Text,
     Link,
@@ -37,11 +38,12 @@ class Bot(BaseBot):
     adapter: "Adapter"
 
     @override
-    def __init__(self, adapter: "Adapter", self_id: str, bot_info: BotInfo):
+    def __init__(self, adapter: "Adapter", self_id: str, bot_info: BotInfo, official_timeout: float):
         super().__init__(adapter, self_id)
 
         # Bot 配置信息
         self.bot_info: BotInfo = bot_info
+        self.official_timeout = official_timeout
 
         # Bot 鉴权信息
         self._access_token: Optional[str] = None
@@ -55,7 +57,14 @@ class Bot(BaseBot):
         **kwargs,
     ) -> Any:
         """ 发送消息 """
-        return await self.send_custom_message(event.user_id, message)
+        if isinstance(event, OfficalEvent) and not self.bot_info.approve:  # 未完成微信认证的公众号
+            try:
+                return await self.reply_message(event=event, message=message)
+            except OfficialReplyError as e:
+                return await self.send_custom_message(user_id=event.get_user_id(), message=message)
+
+        else:  # 小程序、已认证的公众号 直接发客服消息
+            return await self.send_custom_message(user_id=event.get_user_id(), message=message)
 
     async def handle_event(self, event: Type[Event]):
         """ 处理事件 """
@@ -138,8 +147,22 @@ class Bot(BaseBot):
         resp: Response = await self.adapter.request(Request("GET", url))
         return resp.content
 
+    async def create_menu(self, data: dict) -> None:
+        """ 创建自定义菜单
+
+        用法：[官方文档](https://developers.weixin.qq.com/doc/offiaccount/Custom_Menus/Creating_Custom-Defined_Menu.html)
+        """
+        await self.call_json_api(
+            "/menu/create",
+            json=data,
+        )
+
     async def send_custom_message(self, user_id: str, message: Message | MessageSegment | str) -> dict:
-        """ 发送 客服消息 """
+        """ 发送 客服消息
+
+        注意：
+        公众号需要微信认证
+        """
         if isinstance(message, str):
             message = Message(MessageSegment.text(message))
         elif isinstance(message, MessageSegment):
@@ -246,12 +269,64 @@ class Bot(BaseBot):
             else:
                 raise NotImplementedError()
 
-    async def create_menu(self, data: dict) -> None:
-        """ 创建自定义菜单 
+    async def reply_message(self, event: Type[Event], message: Message | MessageSegment | str) -> None:
+        """ 公众号被动回复 [微信文档](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Passive_user_reply_message.html)
 
-        用法：[官方文档](https://developers.weixin.qq.com/doc/offiaccount/Custom_Menus/Creating_Custom-Defined_Menu.html)
+        注意：
+        - 需要在5秒内回复\n
+        - 只能回复一次\n
         """
-        await self.call_json_api(
-            "/menu/create",
-            json=data,
-        )
+        if isinstance(message, str):
+            message = Message(MessageSegment.text(message))
+        elif isinstance(message, MessageSegment):
+            message = Message(message)
+        elif not isinstance(message, Message):
+            raise ValueError("Unsupported message type")
+
+        resp = {
+            "ToUserName": event.user_id,
+            "FromUserName": event.to_user_id,
+            "CreateTime": int(time.time()),
+        }
+
+        MSG = "Passive replies have a shorter time limit, please upload in advance and use media_id"
+
+        segment = message[0]
+        if isinstance(segment, Text):
+            resp |= {
+                "MsgType": "text",
+                "Content": segment.data["text"]
+            }
+
+        elif isinstance(segment, Image):
+            if segment.data["media_id"]:
+                media_id = segment.data["media_id"]
+            else:
+                raise ValueError(MSG)
+
+            resp |= {
+                "MsgType": "image",
+                "Image": {
+                    "MediaId": media_id,
+                }
+            }
+
+        elif isinstance(segment, Voice):
+            if segment.data["media_id"]:
+                media_id = segment.data["media_id"]
+            else:
+                raise ValueError(MSG)
+
+            resp |= {
+                "MsgType": "voice",
+                "Voice": {
+                    "MediaId": media_id,
+                }
+            }
+
+        else:
+            raise NotImplementedError()
+
+        return Response(200, content=unparse({
+            "xml": resp,
+        }))

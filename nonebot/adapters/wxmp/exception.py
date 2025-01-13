@@ -85,3 +85,9 @@ class UnkonwnEventError(AdapterException):
 
     def __str__(self):
         return self.__repr__()
+
+
+class OfficialReplyError(AdapterException):
+    """ 公众号被动回复错误 \n
+    超时 / 已经回复过
+    """

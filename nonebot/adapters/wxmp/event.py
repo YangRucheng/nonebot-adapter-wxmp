@@ -2,6 +2,7 @@ from typing import Any, Union, Callable, Optional, cast, Literal, Type, TYPE_CHE
 from pydantic import Field, ConfigDict, ValidationError, BaseModel
 from typing_extensions import override
 import datetime
+import random
 
 from nonebot.adapters import Event as BaseEvent
 from nonebot.compat import model_dump
@@ -54,6 +55,14 @@ class Event(BaseEvent):
     @override
     def get_session_id(self) -> str:
         return f"{self.user_id}_{self.to_user_id}"
+
+    def get_event_id(self) -> str:
+        """ 随机生成 event_id """
+        if event_id := getattr(self, "_event_id", None):
+            return event_id
+        else:
+            self._event_id = f"{self.get_session_id()}_{random.randint(int(10e5), int(10e20))}"
+            return self._event_id
 
 
 class NoticeEvent(Event):

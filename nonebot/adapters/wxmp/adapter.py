@@ -1,6 +1,6 @@
-from typing import Any, Union, Callable, Optional, cast, Type
-from typing_extensions import override
+from typing import Any, Union, Callable, Optional, cast, Type, ClassVar
 from pydantic import BaseModel, Field, ValidationError
+from typing_extensions import override
 from yarl import URL
 import xmltodict
 import asyncio
@@ -31,6 +31,7 @@ from nonebot.adapters import Adapter as BaseAdapter
 from .bot import Bot
 from .event import *
 from .utils import log
+from .store import OfficialReplyResult
 from .config import Config, BotInfo
 from .exception import (
     ActionFailed,
@@ -52,6 +53,8 @@ from nonebot.drivers import (
 
 
 class Adapter(BaseAdapter):
+    _result: ClassVar[OfficialReplyResult] = OfficialReplyResult()
+
     @override
     def __init__(self, driver: Driver, **kwargs: Any):
         super().__init__(driver, **kwargs)
@@ -114,7 +117,7 @@ class Adapter(BaseAdapter):
                     )
                 )
             if not (bot := self.bots.get(bot_info.appid, None)):
-                bot = Bot(self, bot_info.appid, bot_info)
+                bot = Bot(self, self_id=bot_info.appid, bot_info=bot_info, official_timeout=self.wxmp_config.wxmp_official_timeout)
                 self.bot_connect(bot)
                 log("INFO", f"<y>Bot {escape_tag(bot_info.appid)}</y> connected")
 
@@ -162,17 +165,22 @@ class Adapter(BaseAdapter):
             if not secrets.compare_digest(sha1_signature, signature):
                 return Response(403, content="Invalid signature")
             else:
-                if bot.bot_info.callback:
+                if bot.bot_info.callback:  # 转发事件推送到指定 URL
                     await self._callback(bot.bot_info.callback, request)
 
                 payload: dict = self.parse_body(request.content)
-                self.dispatch_event(bot, payload)
-                return Response(200, content="success")
+                return await self.dispatch_event(bot, payload, self.wxmp_config.wxmp_official_timeout)
         else:
             return Response(400, content="Invalid request body")
 
-    def dispatch_event(self, bot: Bot, payload: dict):
-        """ 分发事件 """
+    async def dispatch_event(self, bot: Bot, payload: dict, timeout: float) -> Response:
+        """ 分发事件 
+
+        参数：
+        - `bot`: Bot 对象
+        - `payload`: 事件数据
+        - `timeout`: 公众号响应超时时间
+        """
         try:
             event = self.payload_to_event(bot, payload)
         except Exception as e:
@@ -183,6 +191,17 @@ class Adapter(BaseAdapter):
             )
             task.add_done_callback(self.tasks.discard)
             self.tasks.add(task)
+
+        if isinstance(event, OfficalEvent):
+            try:
+                resp = self._result.get_resp(event_id=event.get_event_id(), timeout=timeout)
+            except asyncio.TimeoutError as e:
+                self._result.clear(event.get_event_id())
+                return Response(200, content="success")
+            else:
+                return resp
+        else:
+            return Response(200, content="success")
 
     def payload_to_event(self, bot: Bot,  payload: dict) -> type[Event]:
         """ 将微信公众平台的事件数据转换为 Event 对象 """
