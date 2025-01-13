@@ -1,0 +1,8 @@
+httpx[http2]
+websockets
+xmltodict
+fastapi
+
+nonebot2[httpx,websockets,fastapi]
+
+nonebot-adapter-wxmp
