@@ -23,7 +23,9 @@ class MessageSegment(BaseMessageSegment["Message"]):
 
     @override
     def __str__(self) -> str:
-        return self.data["text"]
+        if self.type == "text":
+            return self.data["text"]
+        return ""
 
     @override
     def is_text(self) -> bool:
@@ -153,6 +155,8 @@ class MessageSegment(BaseMessageSegment["Message"]):
         thumb: Optional[bytes] = None,
         thumb_path: Optional[Path] = None,
         thumb_media_id: Optional[str] = None,
+        title: str = "",
+        description: str = "",
     ) -> "Video":
         """ 视频消息段
 
@@ -163,6 +167,8 @@ class MessageSegment(BaseMessageSegment["Message"]):
         - `thumb` 缩略图的二进制数据
         - `thumb_path` 缩略图的本地路径
         - `thumb_media_id` 微信公众平台 MediaID
+        - `title` 视频标题
+        - `description` 视频描述
         """
         return Video("video", {
             "file": file,
@@ -171,6 +177,8 @@ class MessageSegment(BaseMessageSegment["Message"]):
             "thumb": thumb,
             "thumb_path": thumb_path,
             "thumb_media_id": thumb_media_id,
+            "title": title,
+            "description": description,
         })
 
     @classmethod

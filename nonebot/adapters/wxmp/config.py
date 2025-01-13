@@ -14,4 +14,4 @@ class BotInfo(BaseModel):
 class Config(BaseModel):
     wxmp_bots: list[BotInfo] = Field(default_factory=list)
     wxmp_verify: bool = Field(default=True)  # 是否开启消息签名验证
-    wxmp_official_timeout: float = Field(default=4.5)  # 公众号响应超时时间
+    wxmp_official_timeout: float = Field(default=4)  # 公众号响应超时时间

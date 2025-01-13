@@ -16,8 +16,8 @@ from nonebot.drivers import (
 
 from .event import *
 from .file import File
-from .utils import log
 from .config import BotInfo
+from .utils import log, escape
 from .exception import ActionFailed, OfficialReplyError
 from .message import (
     Text,
@@ -57,7 +57,7 @@ class Bot(BaseBot):
         **kwargs,
     ) -> Any:
         """ 发送消息 """
-        if isinstance(event, OfficalEvent) and not self.bot_info.approve:  # 未完成微信认证的公众号
+        if self.bot_info.type == "official" and not self.bot_info.approve:  # 未完成微信认证的公众号
             try:
                 return await self.reply_message(event=event, message=message)
             except OfficialReplyError as e:
@@ -265,7 +265,29 @@ class Bot(BaseBot):
                     },
                 )
             elif isinstance(segment, Video):
-                raise NotImplementedError()
+                if segment.data["media_id"]:
+                    media_id = segment.data["media_id"]
+                elif segment.data["file"]:
+                    media_id = await self.upload_temp_media(File(file=segment.data["file"], file_type="video", file_name="nonebot_upload.mp4"))
+                elif segment.data["file_path"]:
+                    file_path = cast(Path, segment.data["file_path"])
+                    media_id = await self.upload_temp_media(File(file_path=file_path, file_type="video"))
+                else:
+                    raise ValueError("At least one of `media_id`, `file`, `file_path` is required")
+
+                return await self.call_json_api(
+                    "/message/custom/send",
+                    json={
+                        "touser": user_id,
+                        "msgtype": "video",
+                        "video": {
+                            "media_id": media_id,
+                            "title": segment.data["title"],
+                            "description": segment.data["description"],
+                        },
+                    },
+                )
+
             else:
                 raise NotImplementedError()
 
@@ -290,6 +312,9 @@ class Bot(BaseBot):
         }
 
         MSG = "Passive replies have a shorter time limit, please upload in advance and use media_id"
+
+        if len(message) > 1:
+            log("WARNING", "Passive replies can only reply once, only the first message will be sent")
 
         segment = message[0]
         if isinstance(segment, Text):
@@ -324,9 +349,30 @@ class Bot(BaseBot):
                 }
             }
 
-        else:
-            raise NotImplementedError()
+        elif isinstance(segment, Video):
+            if segment.data["media_id"]:
+                media_id = segment.data["media_id"]
+            else:
+                raise ValueError(MSG)
 
-        return Response(200, content=unparse({
-            "xml": resp,
-        }))
+            resp |= {
+                "MsgType": "video",
+                "Video": {
+                    "MediaId": media_id,
+                    "Title": segment.data["title"],
+                    "Description": segment.data["description"],
+                }
+            }
+
+        else:
+            raise OfficialReplyError
+
+        self.adapter._result.set_resp(
+            event_id=event.get_event_id(),
+            resp=Response(
+                status_code=200,
+                content=unparse({
+                    "xml": resp,
+                })
+            )
+        )

@@ -192,9 +192,9 @@ class Adapter(BaseAdapter):
             task.add_done_callback(self.tasks.discard)
             self.tasks.add(task)
 
-        if isinstance(event, OfficalEvent):
+        if bot.bot_info.type == "official":
             try:
-                resp = self._result.get_resp(event_id=event.get_event_id(), timeout=timeout)
+                resp = await self._result.get_resp(event_id=event.get_event_id(), timeout=timeout)
             except asyncio.TimeoutError as e:
                 self._result.clear(event.get_event_id())
                 return Response(200, content="success")

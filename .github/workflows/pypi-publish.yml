@@ -6,29 +6,21 @@ jobs:
   build-and-publish:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - name: 检出代码
+        uses: actions/checkout@v4
 
-      - name: Set up Python 3.10
+      - name: 安装 Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      - name: Install pypa/build
-        run: >-
-          python -m
-          pip install
-          build
-          --user
+      - name: 安装 pypa/build
+        run: python -m pip install build --user
 
-      - name: Build a binary wheel and a source tarball
-        run: >-
-          python -m
-          build
-          --sdist
-          --wheel
-          --outdir dist/
-          .
-      - name: Publish distribution 📦 to PyPI
+      - name: 构建二进制轮子包和源代码分发包
+        run: python -m build --sdist --wheel --outdir dist/
+
+      - name: 发布到 PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}

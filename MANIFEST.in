@@ -1,0 +1,3 @@
+include nonebot/**
+
+exclude test/*

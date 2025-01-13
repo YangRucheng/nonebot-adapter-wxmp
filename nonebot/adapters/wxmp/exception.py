@@ -74,7 +74,7 @@ class ApiNotAvailable(BaseApiNotAvailable, WxmpAdapterException):
     pass
 
 
-class UnkonwnEventError(AdapterException):
+class UnkonwnEventError(WxmpAdapterException):
     """ 未知事件 """
 
     def __init__(self, event: dict):
@@ -87,7 +87,7 @@ class UnkonwnEventError(AdapterException):
         return self.__repr__()
 
 
-class OfficialReplyError(AdapterException):
+class OfficialReplyError(WxmpAdapterException):
     """ 公众号被动回复错误 \n
-    超时 / 已经回复过
+    超时 / 已经回复过 / 不支持的类型
     """

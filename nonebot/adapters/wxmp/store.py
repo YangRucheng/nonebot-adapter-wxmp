@@ -12,8 +12,9 @@ from nonebot.drivers import (
     WebSocketServerSetup
 )
 
-from .event import OfficalEvent
 from .utils import log
+from .event import OfficalEvent
+from .exception import OfficialReplyError
 
 
 class OfficialReplyResult:
@@ -26,6 +27,8 @@ class OfficialReplyResult:
         """ 设置响应 """
         if future := self._futures.get(event_id):
             future.set_result(resp)
+        else:
+            raise OfficialReplyError()
 
     async def get_resp(self, event_id: str, timeout: float) -> Response:
         """ 获取响应 """

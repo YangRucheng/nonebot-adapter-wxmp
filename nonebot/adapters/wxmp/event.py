@@ -50,7 +50,7 @@ class Event(BaseEvent):
 
     @override
     def get_user_id(self) -> str:
-        return self.to_user_id
+        return self.user_id
 
     @override
     def get_session_id(self) -> str:
