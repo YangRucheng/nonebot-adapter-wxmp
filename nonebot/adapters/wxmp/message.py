@@ -1,3 +1,4 @@
+import re
 from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Iterable, Optional, Type, TypedDict, Union
@@ -210,6 +211,20 @@ class MessageSegment(BaseMessageSegment["Message"]):
             "label": label,
         })
 
+    @classmethod
+    def emjoy(
+        cls,
+        emjoy_type: "EmjoyType",
+    ) -> "Emjoy":
+        """ 表情消息段
+
+        参数：
+        - `emjoy` 表情类型
+        """
+        return Emjoy("emjoy", {
+            "emjoy": emjoy_type,
+        })
+
 
 class _TextData(TypedDict):
     text: str
@@ -301,6 +316,7 @@ class Location(MessageSegment):
 
 class EmjoyType(Enum):
     """ 行内表情
+
     注意：这是人工测试出来的，官方没有对照表，更新可能不及时，且不能发送
     """
     微笑 = "/::)"
@@ -440,6 +456,10 @@ class EmjoyType(Enum):
     糗大了 = ""
     吓 = ""
 
+    @override
+    def __repr__(self):
+        return f"[{self.name}]"
+
 
 class _EmjoyData(TypedDict):
     emjoy: EmjoyType
@@ -493,14 +513,29 @@ class Message(BaseMessage[MessageSegment]):
     def from_event(cls, event: type["MessageEvent"]) -> "Message":
         """ 从消息事件转为消息序列 """
         if event.message_type == "text":
-            return cls(MessageSegment.text(
-                text=getattr(event, "content"),
-            ))
+            message: list[Type[MessageSegment]] = []
+            text = getattr(event, "content")
+
+            parts = re.split(f"({
+                '|'.join(
+                    re.escape(emjoy.value) for emjoy in EmjoyType if emjoy.value
+                )
+            })", text)
+            for part in parts:
+                if not part:
+                    continue
+                if part in EmjoyType._value2member_map_:
+                    message.append(MessageSegment.emjoy(EmjoyType(part)))
+                else:
+                    message.append(MessageSegment.text(part))
+            return cls(message)
+
         elif event.message_type == "image":
             return cls(MessageSegment.image(
                 media_id=getattr(event, "media_id"),
                 file_url=getattr(event, "pic_url"),
             ))
+
         elif event.message_type == "miniprogrampage":
             return cls(MessageSegment.miniprogrampage(
                 title=getattr(event, "title"),
@@ -509,16 +544,19 @@ class Message(BaseMessage[MessageSegment]):
                 thumb_media_id=getattr(event, "thumb_media_id"),
                 thumb_url=getattr(event, "thumb_url"),
             ))
+
         elif event.message_type == "video":
             return cls(MessageSegment.video(
                 media_id=getattr(event, "media_id"),
                 thumb_media_id=getattr(event, "thumb_media_id"),
             ))
+
         elif event.message_type == "voice":
             return cls(MessageSegment.voice(
                 media_id=getattr(event, "media_id"),
                 format=getattr(event, "format"),
             ))
+
         elif event.message_type == "location":
             return cls(MessageSegment.location(
                 location_x=float(getattr(event, "location_x")),
@@ -526,5 +564,6 @@ class Message(BaseMessage[MessageSegment]):
                 scale=getattr(event, "scale"),
                 label=getattr(event, "label"),
             ))
+
         else:
             raise UnkonwnEventError(dict(event))
