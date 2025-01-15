@@ -1,14 +1,15 @@
-from pydantic import Field, HttpUrl, BaseModel
-from typing import Literal
+from typing import Literal, Optional
+
+from pydantic import BaseModel, Field, HttpUrl
 
 
 class BotInfo(BaseModel):
-    appid: str = Field()
-    token: str = Field()  # 事件推送令牌
-    secret: str = Field()  # 接口调用凭证
-    type: Literal["official", "miniprogram"] = Field(default="miniprogram")  # 机器人类型 小程序/公众号：miniprogram / official
+    appid: str
+    token: str  # 事件推送令牌
+    secret: str  # 接口调用凭证
+    type: Literal["official", "miniprogram"] = Field(default="miniprogram")  # 机器人类型
     approve: bool = Field(default=False)  # 是否已通过微信认证
-    callback: HttpUrl = Field(default=None)  # 是否将事件推送转发到指定 URL
+    callback: Optional[HttpUrl] = Field(default=None)  # 是否将事件推送转发到指定 URL
 
 
 class Config(BaseModel):

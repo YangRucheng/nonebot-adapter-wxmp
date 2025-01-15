@@ -1,14 +1,19 @@
-from typing import Type, Union, Mapping, Iterable, Optional, Self, TYPE_CHECKING
-from typing_extensions import override
-from pydantic import HttpUrl
-from pathlib import Path
 from enum import Enum
+from pathlib import Path
+from typing import TYPE_CHECKING, Iterable, Optional, Type, TypedDict, Union
 
-from .exception import *
+from pydantic import HttpUrl
+from typing_extensions import override
+
 from nonebot.adapters import (
-    MessageSegment as BaseMessageSegment,
     Message as BaseMessage,
 )
+from nonebot.adapters import (
+    MessageSegment as BaseMessageSegment,
+)
+
+from .exception import UnkonwnEventError
+
 if TYPE_CHECKING:
     from .event import MessageEvent
 

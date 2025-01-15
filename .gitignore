@@ -3,7 +3,6 @@ data
 docs
 tmp
 
-.vscode
 .DS_Store
 
 *.log

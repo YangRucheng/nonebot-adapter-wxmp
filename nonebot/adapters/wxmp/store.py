@@ -1,19 +1,7 @@
-from typing import Callable, Any, Union, Awaitable, Type, Optional
-from asyncio import to_thread, iscoroutinefunction
 import asyncio
 
-from nonebot.drivers import (
-    Request,
-    Response,
-    ASGIMixin,
-    WebSocket,
-    HTTPServerSetup,
-    HTTPClientMixin,
-    WebSocketServerSetup
-)
+from nonebot.drivers import Response
 
-from .utils import log
-from .event import OfficalEvent
 from .exception import OfficialReplyError
 
 
@@ -39,7 +27,7 @@ class OfficialReplyResult:
         finally:
             try:
                 del self._futures[event_id]
-            except:
+            except KeyError:
                 pass
 
     def clear(self, event_id: str) -> None:
@@ -48,5 +36,5 @@ class OfficialReplyResult:
             try:
                 future.cancel()
                 del self._futures[event_id]
-            except:
+            except KeyError:
                 pass

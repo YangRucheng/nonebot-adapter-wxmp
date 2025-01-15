@@ -1,34 +1,30 @@
-from typing import Union, Any, Optional, Type, TYPE_CHECKING, cast, Literal
-from typing_extensions import override
-from xmltodict import unparse
-from pathlib import Path
 import json
 import time
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Literal, Optional, Type, Union, cast
 
-from nonebot.message import handle_event
-from nonebot.utils import logger_wrapper
+from typing_extensions import override
+from xmltodict import unparse
+
 from nonebot.adapters import Bot as BaseBot
 from nonebot.drivers import Request, Response
-from nonebot.drivers import (
-    Request,
-    Response,
-)
+from nonebot.message import handle_event
 
-from .event import *
-from .file import File
 from .config import BotInfo
-from .utils import log, escape
+from .event import Event
 from .exception import ActionFailed, OfficialReplyError
+from .file import File
 from .message import (
-    Text,
-    Link,
     Image,
-    Voice,
-    Video,
+    Link,
     Message,
     MessageSegment,
     Miniprogrampage,
+    Text,
+    Video,
+    Voice,
 )
+from .utils import log
 
 if TYPE_CHECKING:
     from .adapter import Adapter
@@ -60,7 +56,7 @@ class Bot(BaseBot):
         if self.bot_info.type == "official" and not self.bot_info.approve:  # 未完成微信认证的公众号
             try:
                 return await self.reply_message(event=event, message=message)
-            except OfficialReplyError as e:
+            except OfficialReplyError:
                 return await self.send_custom_message(user_id=event.get_user_id(), message=message)
 
         else:  # 小程序、已认证的公众号 直接发客服消息

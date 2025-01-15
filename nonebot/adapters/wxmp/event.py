@@ -1,14 +1,14 @@
-from typing import Any, Union, Callable, Optional, cast, Literal, Type, TYPE_CHECKING
-from pydantic import Field, ConfigDict, ValidationError, BaseModel
-from typing_extensions import override
 import datetime
 import random
+from typing import Literal, Optional
+
+from pydantic import ConfigDict, Field
+from typing_extensions import override
 
 from nonebot.adapters import Event as BaseEvent
 from nonebot.compat import model_dump
 
 from .message import Message
-from .utils import escape
 
 
 class Event(BaseEvent):

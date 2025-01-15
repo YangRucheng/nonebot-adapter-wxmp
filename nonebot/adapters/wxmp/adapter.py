@@ -1,55 +1,39 @@
-from typing import Any, Union, Callable, Optional, cast, Type, ClassVar
-from pydantic import BaseModel, Field, ValidationError
-from typing_extensions import override
-from yarl import URL
-import xmltodict
 import asyncio
 import hashlib
-import secrets
 import json
-import sys
-import re
+import secrets
+from typing import Any, ClassVar
+
+import xmltodict
+from pydantic import ValidationError
+from typing_extensions import override
+from yarl import URL
 
 from nonebot import get_plugin_config
-from nonebot.utils import logger_wrapper
-from nonebot.exception import WebSocketClosed
-from nonebot.utils import DataclassEncoder, escape_tag
+from nonebot.adapters import Adapter as BaseAdapter
 from nonebot.drivers import (
-    URL,
+    ASGIMixin,
     Driver,
+    HTTPClientMixin,
+    HTTPServerSetup,
     Request,
     Response,
-    WebSocket,
-    ForwardDriver,
-    ReverseDriver,
-    HTTPServerSetup,
-    WebSocketServerSetup,
 )
-
-from nonebot.adapters import Adapter as BaseAdapter
+from nonebot.utils import escape_tag
 
 from .bot import Bot
-from .event import *
-from .utils import log
-from .store import OfficialReplyResult
-from .config import Config, BotInfo
+from .config import Config
+from .event import (
+    MINIPROGRAM_EVENT_CLASSES,
+    OFFICIAL_EVENT_CLASSES,
+    Event,
+)
 from .exception import (
     ActionFailed,
-    NetworkError,
-    ApiNotAvailable,
     UnkonwnEventError,
 )
-
-from nonebot import get_plugin_config
-from nonebot.drivers import (
-    Request,
-    Response,
-    ASGIMixin,
-    WebSocket,
-    HTTPServerSetup,
-    HTTPClientMixin,
-    WebSocketServerSetup
-)
+from .store import OfficialReplyResult
+from .utils import log
 
 
 class Adapter(BaseAdapter):
@@ -95,7 +79,7 @@ class Adapter(BaseAdapter):
                 HTTPServerSetup(
                     path=URL(f"/wxmp/revice/{bot_info.appid}/"),
                     method="POST",
-                    name=f"{self.get_name()} {bot_info.appid} WebHook",
+                    name=f"{self.get_name()} {bot_info.appid} WebHook Slash",
                     handle_func=self._handle_event,
                 )
             )
@@ -112,7 +96,7 @@ class Adapter(BaseAdapter):
                     HTTPServerSetup(
                         path=URL(f"/wxmp/revice/{bot_info.appid}/"),
                         method="GET",
-                        name=f"{self.get_name()} {bot_info.appid} Verify",
+                        name=f"{self.get_name()} {bot_info.appid} Verify Slash",
                         handle_func=self._handle_verify,
                     )
                 )
@@ -195,7 +179,7 @@ class Adapter(BaseAdapter):
         if bot.bot_info.type == "official":
             try:
                 resp = await self._result.get_resp(event_id=event.get_event_id(), timeout=timeout)
-            except asyncio.TimeoutError as e:
+            except asyncio.TimeoutError:
                 self._result.clear(event.get_event_id())
                 return Response(200, content="success")
             else:
@@ -244,7 +228,7 @@ class Adapter(BaseAdapter):
 
     def _get_appid(self, path: str) -> str:
         """ 从链接中获取 Bot 的 AppID """
-        return path.split('/')[-1]
+        return path.rstrip('/').split('/')[-1]
 
     async def _callback(self, url: str, request: Request) -> None:
         """ 把事件推送转发到指定 URL """
@@ -257,7 +241,7 @@ class Adapter(BaseAdapter):
                     content=request.content,
                 )
             )
-        except Exception as e:
+        except Exception:
             pass
 
     async def _call_api(self, bot: Bot, api: str, **data: Any) -> Response:
