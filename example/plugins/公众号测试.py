@@ -1,13 +1,13 @@
 from nonebot import on_message, on_command
 from nonebot.plugin import PluginMetadata
 from nonebot.params import CommandArg
-from nonebot.adapters import Message
 from nonebot.matcher import Matcher
 from pathlib import Path
 import asyncio
 import os
 
-from nonebot.adapters.wxmp import OfficalEvent, MessageSegment, Bot, File
+from nonebot.adapters.wxmp import OfficalEvent, MessageSegment, Bot, File, Message
+from nonebot.adapters.wxmp.message import EmjoyType
 
 
 async def rule_test(
@@ -25,12 +25,20 @@ async def handle(
 ):
     await bot.send(
         event=event,
-        message="测试文本（被动回复消息）")
+        message=Message(
+            MessageSegment.text("测试文本（被动回复消息）")
+            + MessageSegment.emjoy(EmjoyType.再见)
+        )
+    )
 
     await asyncio.sleep(10)
     await bot.send(
         event=event,
-        message="测试文本（客服消息）")
+        message=Message(
+            MessageSegment.text("测试文本（客服消息）")
+            + MessageSegment.emjoy(EmjoyType.再见)
+        )
+    )
 
 
 @on_command("图片", rule=rule_test).handle()

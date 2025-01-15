@@ -1,7 +1,6 @@
 from nonebot import on_message, on_command
 from nonebot.plugin import PluginMetadata
 from nonebot.params import CommandArg
-from nonebot.adapters import Message
 from nonebot.matcher import Matcher
 from pathlib import Path
 import asyncio
