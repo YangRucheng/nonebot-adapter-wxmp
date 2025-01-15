@@ -100,8 +100,11 @@ class MessageEvent(Event):
 
     @override
     def get_message(self) -> "Message":
-        self._message = Message.from_event(self)
-        return self._message
+        if message := getattr(self, "_message", None):
+            return message
+        else:
+            self._message = Message.from_event(self)
+            return self._message
 
     @override
     def get_event_description(self) -> str:
