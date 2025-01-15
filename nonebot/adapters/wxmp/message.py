@@ -143,6 +143,7 @@ class MessageSegment(BaseMessageSegment["Message"]):
         - `file` 语音文件的二进制数据
         - `file_path` 语音文件的本地路径
         - `media_id` 微信公众平台 MediaID
+        - `format` 语音格式
         """
         return Voice("voice", {
             "file": file,
@@ -210,37 +211,97 @@ class MessageSegment(BaseMessageSegment["Message"]):
         })
 
 
+class _TextData(TypedDict):
+    text: str
+
+
 class Text(MessageSegment):
     """ 文本 消息段 """
+    data: _TextData
+
+
+class _ImageData(TypedDict):
+    file: Optional[bytes]
+    file_path: Optional[Path]
+    file_url: Optional[HttpUrl]
+    media_id: Optional[str]
 
 
 class Image(MessageSegment):
     """ 图片 消息段 """
+    data: _ImageData
+
+
+class _LinkData(TypedDict):
+    title: str
+    description: str
+    url: str
+    thumb_url: Optional[str]
 
 
 class Link(MessageSegment):
     """ 图文链接 消息段 """
+    data: _LinkData
+
+
+class _MiniProgramPageData(TypedDict):
+    title: str
+    page_path: str
+    thumb_media: Optional[bytes]
+    thumb_url: Optional[str]
+    thumb_media_path: Optional[Path]
+    thumb_media_id: Optional[str]
+    appid: Optional[str]
 
 
 class Miniprogrampage(MessageSegment):
     """ 小程序卡片 消息段 """
+    data: _MiniProgramPageData
+
+
+class _VoiceData(TypedDict):
+    file: Optional[bytes]
+    file_path: Optional[Path]
+    media_id: Optional[str]
+    format: Optional[str]
 
 
 class Voice(MessageSegment):
     """ 音频 消息段 """
+    data: _VoiceData
+
+
+class _VideoData(TypedDict):
+    file: Optional[bytes]
+    file_path: Optional[Path]
+    media_id: Optional[str]
+    thumb: Optional[bytes]
+    thumb_path: Optional[Path]
+    thumb_media_id: Optional[str]
+    title: str
+    description: str
 
 
 class Video(MessageSegment):
     """ 视频 消息段 """
+    data: _VideoData
+
+
+class _LocationData(TypedDict):
+    location_x: float
+    location_y: float
+    scale: int
+    label: str
 
 
 class Location(MessageSegment):
     """ 位置 消息段 """
+    data: _LocationData
 
 
 class EmjoyType(Enum):
     """ 行内表情
-    注意：这是人工测试出来的，官方没有对照表，更新可能不及时
+    注意：这是人工测试出来的，官方没有对照表，更新可能不及时，且不能发送
     """
     微笑 = "/::)"
     撇嘴 = "/::~"
@@ -380,8 +441,13 @@ class EmjoyType(Enum):
     吓 = ""
 
 
+class _EmjoyData(TypedDict):
+    emjoy: EmjoyType
+
+
 class Emjoy(MessageSegment):
     """ 表情（行内） 消息段 """
+    data: _EmjoyData
 
 
 class Message(BaseMessage[MessageSegment]):
