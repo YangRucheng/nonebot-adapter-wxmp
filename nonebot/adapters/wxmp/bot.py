@@ -164,7 +164,9 @@ class Bot(BaseBot):
         elif isinstance(message, MessageSegment):
             message = Message(message)
         elif not isinstance(message, Message):
-            raise ValueError("Unsupported message type")
+            raise ValueError(f"Unsupported message type {type(message)}")
+
+        message = message.merge_segments()
 
         for segment in message:
             if isinstance(segment, Text):
@@ -299,7 +301,9 @@ class Bot(BaseBot):
         elif isinstance(message, MessageSegment):
             message = Message(message)
         elif not isinstance(message, Message):
-            raise ValueError("Unsupported message type")
+            raise ValueError(f"Unsupported message type {type(message)}")
+
+        message = message.merge_segments()
 
         resp = {
             "ToUserName": event.user_id,

@@ -1,7 +1,7 @@
 import re
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Optional, Type, TypedDict, Union
+from typing import TYPE_CHECKING, Iterable, Optional, Type, TypedDict, Union, cast
 
 from pydantic import HttpUrl
 from typing_extensions import override
@@ -538,3 +538,31 @@ class Message(BaseMessage[MessageSegment]):
 
         else:
             raise UnkonwnEventError(dict(event))
+
+    def merge_segments(self) -> "Message":
+        """ 合并相邻的文本消息段，并转义行内表情 """
+        message: list[Type[MessageSegment]] = []
+
+        for segm in self:
+            if not len(message):
+                message.append(segm)
+                continue
+
+            if segm.type not in ["emjoy", "text"]:
+                message.append(segm)
+                continue
+
+            if message[-1].type != "text":
+                if segm.type == "text":
+                    message.append(segm)
+                elif segm.type == "emjoy":
+                    segm = cast(Emjoy, segm)
+                    message.append(MessageSegment.text(segm.data["emjoy"].value))
+            else:
+                if segm.type == "text":
+                    message[-1].data["text"] += segm.data["text"]
+                elif segm.type == "emjoy":
+                    segm = cast(Emjoy, segm)
+                    message[-1].data["text"] += segm.data["emjoy"].value
+
+        return self.__class__(message)
