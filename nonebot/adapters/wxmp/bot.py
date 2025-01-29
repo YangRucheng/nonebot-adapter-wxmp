@@ -39,6 +39,9 @@ from .utils import log
 if TYPE_CHECKING:
     from .adapter import Adapter
 
+    class _ApiCall(Protocol):
+        async def __call__(self, **kwargs: Any) -> Any: ...
+
 
 class Bot(BaseBot):
     adapter: "Adapter"
@@ -60,6 +63,17 @@ class Bot(BaseBot):
         # Bot 鉴权信息
         self._access_token: Optional[str] = None
         self._expires_in: Optional[int] = None
+
+    @override
+    def __getattr__(self, name: str) -> "_ApiCall":
+        """动态调用微信公众平台 API
+
+        调用示例：
+        menu_create -> /cgi-bin/menu/create
+        message_custom_typing -> /cgi-bin/message/custom/typing
+        """
+        path = "/".join(name.strip("_").split("_"))
+        return partial(self.call_json_api, f"/cgi-bin/{path}")
 
     @override
     async def send(
