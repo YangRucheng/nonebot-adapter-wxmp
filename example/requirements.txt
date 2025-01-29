@@ -5,4 +5,4 @@ fastapi
 
 nonebot2[httpx,websockets,fastapi]
 
-nonebot-adapter-wxmp
+git+https://github.com/YangRucheng/nonebot-adapter-wxmp.git#egg=nonebot-adapter-wxmp

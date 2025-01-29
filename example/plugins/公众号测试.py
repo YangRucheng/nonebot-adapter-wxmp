@@ -1,13 +1,11 @@
-from nonebot import on_message, on_command
-from nonebot.plugin import PluginMetadata
-from nonebot.params import CommandArg
-from nonebot.matcher import Matcher
-from pathlib import Path
 import asyncio
 import os
+from pathlib import Path
 
-from nonebot.adapters.wxmp import OfficalEvent, MessageSegment, Bot, File, Message
+from nonebot import on_command
+from nonebot.adapters.wxmp import Bot, File, Message, MessageSegment, OfficalEvent
 from nonebot.adapters.wxmp.message import EmjoyType
+from nonebot.matcher import Matcher
 
 
 async def rule_test(
@@ -18,7 +16,7 @@ async def rule_test(
 
 
 @on_command("文本", rule=rule_test).handle()
-async def handle(
+async def _(
     bot: Bot,
     mather: Matcher,
     event: OfficalEvent,
@@ -42,7 +40,7 @@ async def handle(
 
 
 @on_command("图片", rule=rule_test).handle()
-async def handle(
+async def _(
     bot: Bot,
     mather: Matcher,
     event: OfficalEvent,
@@ -65,7 +63,7 @@ async def handle(
 
 
 @on_command("音频", rule=rule_test).handle()
-async def handle(
+async def _(
     bot: Bot,
     mather: Matcher,
     event: OfficalEvent,
@@ -88,7 +86,7 @@ async def handle(
 
 
 @on_command("视频", rule=rule_test).handle()
-async def handle(
+async def _(
     bot: Bot,
     mather: Matcher,
     event: OfficalEvent,
@@ -115,7 +113,7 @@ async def handle(
 
 
 @on_command("小程序", rule=rule_test).handle()
-async def handle(
+async def _(
     bot: Bot,
     mather: Matcher,
     event: OfficalEvent,

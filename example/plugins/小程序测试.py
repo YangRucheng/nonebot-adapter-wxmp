@@ -1,12 +1,8 @@
-from nonebot import on_message, on_command
-from nonebot.plugin import PluginMetadata
-from nonebot.params import CommandArg
-from nonebot.matcher import Matcher
 from pathlib import Path
-import asyncio
-import os
 
-from nonebot.adapters.wxmp import MiniprogramEvent, MessageSegment, Bot, File
+from nonebot import on_command
+from nonebot.adapters.wxmp import Bot, MessageSegment, MiniprogramEvent
+from nonebot.matcher import Matcher
 
 
 async def rule_test(
@@ -17,7 +13,7 @@ async def rule_test(
 
 
 @on_command("文本2", rule=rule_test, priority=0).handle()
-async def handle(
+async def _(
     bot: Bot,
     mather: Matcher,
     event: MiniprogramEvent,
@@ -29,7 +25,7 @@ async def handle(
 
 
 @on_command("链接2", rule=rule_test, priority=0).handle()
-async def handle(
+async def _(
     bot: Bot,
     mather: Matcher,
     event: MiniprogramEvent,
@@ -46,7 +42,7 @@ async def handle(
 
 
 @on_command("小程序2", rule=rule_test, priority=0).handle()
-async def handle_test(
+async def _(
     bot: Bot,
     mather: Matcher,
     event: MiniprogramEvent,
@@ -63,7 +59,7 @@ async def handle_test(
 
 
 @on_command("图片2", rule=rule_test, priority=0).handle()
-async def handle_test(
+async def _(
     bot: Bot,
     mather: Matcher,
     event: MiniprogramEvent,
