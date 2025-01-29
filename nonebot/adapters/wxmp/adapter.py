@@ -3,6 +3,7 @@ import hashlib
 import json
 import secrets
 from typing import Any, ClassVar
+from urllib.parse import urljoin
 
 import xmltodict
 from pydantic import ValidationError
@@ -49,7 +50,7 @@ class Adapter(BaseAdapter):
     @classmethod
     @override
     def get_name(cls) -> str:
-        """ 适配器名称: `WXMP` """
+        """适配器名称: `WXMP`"""
         return "WXMP"
 
     def setup(self) -> None:
@@ -101,14 +102,19 @@ class Adapter(BaseAdapter):
                     )
                 )
             if not (bot := self.bots.get(bot_info.appid, None)):
-                bot = Bot(self, self_id=bot_info.appid, bot_info=bot_info, official_timeout=self.wxmp_config.wxmp_official_timeout)
+                bot = Bot(
+                    self,
+                    self_id=bot_info.appid,
+                    bot_info=bot_info,
+                    official_timeout=self.wxmp_config.wxmp_official_timeout,
+                )
                 self.bot_connect(bot)
                 log("INFO", f"<y>Bot {escape_tag(bot_info.appid)}</y> connected")
 
         self.driver.on_shutdown(self.shutdown)
 
     async def shutdown(self) -> None:
-        """ 关闭 Adapter """
+        """关闭 Adapter"""
         for task in self.tasks:
             if not task.done():
                 task.cancel()
@@ -121,7 +127,7 @@ class Adapter(BaseAdapter):
 
     @classmethod
     def parse_body(cls, data: str) -> dict:
-        """ 解析微信公众平台的事件数据 """
+        """解析微信公众平台的事件数据"""
         try:
             return json.loads(data)
         except json.JSONDecodeError:
@@ -132,7 +138,7 @@ class Adapter(BaseAdapter):
                 return res
 
     async def _handle_event(self, request: Request) -> Response:
-        """ 处理微信公众平台的事件推送 """
+        """处理微信公众平台的事件推送"""
         url = URL(request.url)
         timestamp = url.query.get("timestamp", "")
         nonce = url.query.get("nonce", "")
@@ -144,8 +150,8 @@ class Adapter(BaseAdapter):
             return Response(404, content="Bot not found")
 
         if request.content:
-            concat_string: str = ''.join(sorted([bot.bot_info.token, timestamp, nonce]))
-            sha1_signature = hashlib.sha1(concat_string.encode('utf-8')).hexdigest()
+            concat_string: str = "".join(sorted([bot.bot_info.token, timestamp, nonce]))
+            sha1_signature = hashlib.sha1(concat_string.encode("utf-8")).hexdigest()
             if not secrets.compare_digest(sha1_signature, signature):
                 return Response(403, content="Invalid signature")
             else:
@@ -153,12 +159,14 @@ class Adapter(BaseAdapter):
                     await self._callback(bot.bot_info.callback, request)
 
                 payload: dict = self.parse_body(request.content)
-                return await self.dispatch_event(bot, payload, self.wxmp_config.wxmp_official_timeout)
+                return await self.dispatch_event(
+                    bot, payload, self.wxmp_config.wxmp_official_timeout
+                )
         else:
             return Response(400, content="Invalid request body")
 
     async def dispatch_event(self, bot: Bot, payload: dict, timeout: float) -> Response:
-        """ 分发事件 
+        """分发事件
 
         参数：
         - `bot`: Bot 对象
@@ -170,15 +178,15 @@ class Adapter(BaseAdapter):
         except Exception as e:
             log("WARNING", f"Failed to parse event {escape_tag(repr(payload))}", e)
         else:
-            task = asyncio.create_task(
-                bot.handle_event(event=event)
-            )
+            task = asyncio.create_task(bot.handle_event(event=event))
             task.add_done_callback(self.tasks.discard)
             self.tasks.add(task)
 
         if bot.bot_info.type == "official":
             try:
-                resp = await self._result.get_resp(event_id=event.get_event_id(), timeout=timeout)
+                resp = await self._result.get_resp(
+                    event_id=event.get_event_id(), timeout=timeout
+                )
             except asyncio.TimeoutError:
                 self._result.clear(event.get_event_id())
                 return Response(200, content="success")
@@ -187,8 +195,8 @@ class Adapter(BaseAdapter):
         else:
             return Response(200, content="success")
 
-    def payload_to_event(self, bot: Bot,  payload: dict) -> type[Event]:
-        """ 将微信公众平台的事件数据转换为 Event 对象 """
+    def payload_to_event(self, bot: Bot, payload: dict) -> type[Event]:
+        """将微信公众平台的事件数据转换为 Event 对象"""
         if bot.bot_info.type == "miniprogram":
             for cls in MINIPROGRAM_EVENT_CLASSES:
                 try:
@@ -206,7 +214,7 @@ class Adapter(BaseAdapter):
         raise UnkonwnEventError(payload)
 
     async def _handle_verify(self, request: Request) -> Response:
-        """ 响应微信公众平台的签名验证 """
+        """响应微信公众平台的签名验证"""
         url = URL(request.url)
         signature = url.query.get("signature", "")
         echostr = url.query.get("echostr", "")
@@ -218,8 +226,8 @@ class Adapter(BaseAdapter):
         if not bot:
             return Response(404, content="Bot not found")
 
-        concat_string: str = ''.join(sorted([timestamp, nonce, bot.bot_info.token]))
-        sha1_signature = hashlib.sha1(concat_string.encode('utf-8')).hexdigest()
+        concat_string: str = "".join(sorted([timestamp, nonce, bot.bot_info.token]))
+        sha1_signature = hashlib.sha1(concat_string.encode("utf-8")).hexdigest()
 
         if secrets.compare_digest(sha1_signature, signature):
             return Response(200, content=echostr)
@@ -227,11 +235,11 @@ class Adapter(BaseAdapter):
             return Response(403, content="Invalid signature")
 
     def _get_appid(self, path: str) -> str:
-        """ 从链接中获取 Bot 的 AppID """
-        return path.rstrip('/').split('/')[-1]
+        """从链接中获取 Bot 的 AppID"""
+        return path.rstrip("/").split("/")[-1]
 
     async def _callback(self, url: str, request: Request) -> None:
-        """ 把事件推送转发到指定 URL """
+        """把事件推送转发到指定 URL"""
         try:
             await self.request(
                 Request(
@@ -245,18 +253,21 @@ class Adapter(BaseAdapter):
             pass
 
     async def _call_api(self, bot: Bot, api: str, **data: Any) -> Response:
-        """ 调用微信公众平台 API """
+        """调用微信公众平台 API"""
         access_token = await bot.get_access_token()
         body: Any | None = data.get("json", data.get("data", data.get("body", None)))
 
         request = Request(
             method=data.get("method", "POST"),
-            url=f"https://api.weixin.qq.com/cgi-bin{api}",
+            url=urljoin("https://api.weixin.qq.com", api),
             params={
                 "access_token": access_token,
-            } | data.get("params", {}),
+            }
+            | data.get("params", {}),
             headers=data.get("headers", {}),
-            content=json.dumps(body, ensure_ascii=False).encode("utf-8") if body else None,
+            content=json.dumps(body, ensure_ascii=False).encode("utf-8")
+            if body
+            else None,
             files=data.get("files", None),
         )
         resp = await self.request(request)

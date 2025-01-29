@@ -1,9 +1,19 @@
 import json
 import time
+from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Optional, Type, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Literal,
+    Optional,
+    Protocol,
+    Type,
+    Union,
+    cast,
+    override,
+)
 
-from typing_extensions import override
 from xmltodict import unparse
 
 from nonebot.adapters import Bot as BaseBot
@@ -34,7 +44,13 @@ class Bot(BaseBot):
     adapter: "Adapter"
 
     @override
-    def __init__(self, adapter: "Adapter", self_id: str, bot_info: BotInfo, official_timeout: float):
+    def __init__(
+        self,
+        adapter: "Adapter",
+        self_id: str,
+        bot_info: BotInfo,
+        official_timeout: float,
+    ):
         super().__init__(adapter, self_id)
 
         # Bot 配置信息
@@ -52,22 +68,28 @@ class Bot(BaseBot):
         message: Union[str, Message, MessageSegment],
         **kwargs,
     ) -> Any:
-        """ 发送消息 """
-        if self.bot_info.type == "official" and not self.bot_info.approve:  # 未完成微信认证的公众号
+        """发送消息"""
+        if (
+            self.bot_info.type == "official" and not self.bot_info.approve
+        ):  # 未完成微信认证的公众号
             try:
                 return await self.reply_message(event=event, message=message)
             except OfficialReplyError:
-                return await self.send_custom_message(user_id=event.get_user_id(), message=message)
+                return await self.send_custom_message(
+                    user_id=event.get_user_id(), message=message
+                )
 
         else:  # 小程序、已认证的公众号 直接发客服消息
-            return await self.send_custom_message(user_id=event.get_user_id(), message=message)
+            return await self.send_custom_message(
+                user_id=event.get_user_id(), message=message
+            )
 
     async def handle_event(self, event: Type[Event]):
-        """ 处理事件 """
+        """处理事件"""
         await handle_event(self, event)
 
     async def get_access_token(self, force_refresh: bool = False) -> str:
-        """ 获取微信公众平台的 access_token """
+        """获取微信公众平台的 access_token"""
         now = int(time.time())
         if (self._expires_in or 0) > now:
             return self._access_token
@@ -94,7 +116,7 @@ class Bot(BaseBot):
         return self._access_token
 
     async def call_json_api(self, api: str, **data: Any) -> dict:
-        """ 调用微信公众平台 Json API """
+        """调用微信公众平台 Json API"""
         resp: Response = await self.call_api(api=api, **data)
         res: dict = json.loads(resp.content)
 
@@ -103,11 +125,11 @@ class Bot(BaseBot):
         return res
 
     async def upload_temp_media(self, file: File) -> str:
-        """ 上传临时素材 \n
+        """上传临时素材 \n
         返回 media_id
         """
         res = await self.call_json_api(
-            "/media/upload",
+            "/cgi-bin/media/upload",
             params={
                 "type": file.file_type,
             },
@@ -119,19 +141,21 @@ class Bot(BaseBot):
         return cast(str, res["media_id"])
 
     async def get_temp_media(self, media_id: str) -> bytes:
-        """ 获取临时素材 """
+        """获取临时素材"""
         resp: Response = await self.call_api(
-            "/media/get",
+            "/cgi-bin/media/get",
             params={
                 "media_id": media_id,
             },
         )
         return resp.content
 
-    async def set_tpying(self, command: Literal["Typing", "CancelTyping"], user_id: str) -> None:
-        """ 设置用户输入状态 """
+    async def message_custom_typing(
+        self, command: Literal["Typing", "CancelTyping"], user_id: str
+    ) -> None:
+        """设置用户输入状态"""
         await self.call_json_api(
-            "/message/custom/typing",
+            "/cgi-bin/message/custom/typing",
             json={
                 "touser": user_id,
                 "command": command,
@@ -139,22 +163,14 @@ class Bot(BaseBot):
         )
 
     async def download_file(self, url: str) -> bytes:
-        """ 下载文件 """
+        """下载文件"""
         resp: Response = await self.adapter.request(Request("GET", url))
         return resp.content
 
-    async def create_menu(self, data: dict) -> None:
-        """ 创建自定义菜单
-
-        用法：[官方文档](https://developers.weixin.qq.com/doc/offiaccount/Custom_Menus/Creating_Custom-Defined_Menu.html)
-        """
-        await self.call_json_api(
-            "/menu/create",
-            json=data,
-        )
-
-    async def send_custom_message(self, user_id: str, message: Message | MessageSegment | str) -> dict:
-        """ 发送 客服消息
+    async def send_custom_message(
+        self, user_id: str, message: Message | MessageSegment | str
+    ) -> dict:
+        """发送 客服消息
 
         注意：
         公众号需要微信认证
@@ -171,38 +187,58 @@ class Bot(BaseBot):
         for segment in message:
             if isinstance(segment, Text):
                 return await self.call_json_api(
-                    "/message/custom/send",
+                    "/cgi-bin/message/custom/send",
                     json={
                         "touser": user_id,
                         "msgtype": "text",
-                        "text": {"content": segment.data["text"]}
+                        "text": {"content": segment.data["text"]},
                     },
                 )
             elif isinstance(segment, Image):
                 if segment.data["media_id"]:
                     media_id = segment.data["media_id"]
                 elif segment.data["file"]:
-                    media_id = await self.upload_temp_media(File(file=segment.data["file"], file_type="image", file_name="nonebot_upload.png"))
+                    media_id = await self.upload_temp_media(
+                        File(
+                            file=segment.data["file"],
+                            file_type="image",
+                            file_name="nonebot_upload.png",
+                        )
+                    )
                 elif segment.data["file_path"]:
                     file_path = cast(Path, segment.data["file_path"])
-                    media_id = await self.upload_temp_media(File(file_path=file_path, file_type="image", file_name="nonebot_upload.png"))
+                    media_id = await self.upload_temp_media(
+                        File(
+                            file_path=file_path,
+                            file_type="image",
+                            file_name="nonebot_upload.png",
+                        )
+                    )
                 elif segment.data["file_url"]:
                     file_url = cast(str, segment.data["file_url"])
-                    media_id = await self.upload_temp_media(File(file=(await self.download_file(file_url)), file_type="image", file_name="nonebot_upload.png"))
+                    media_id = await self.upload_temp_media(
+                        File(
+                            file=(await self.download_file(file_url)),
+                            file_type="image",
+                            file_name="nonebot_upload.png",
+                        )
+                    )
                 else:
-                    raise ValueError("At least one of `media_id`, `file`, `file_path`, `file_url` is required")
+                    raise ValueError(
+                        "At least one of `media_id`, `file`, `file_path`, `file_url` is required"
+                    )
 
                 return await self.call_json_api(
-                    "/message/custom/send",
+                    "/cgi-bin/message/custom/send",
                     json={
                         "touser": user_id,
                         "msgtype": "image",
-                        "image": {"media_id": media_id}
+                        "image": {"media_id": media_id},
                     },
                 )
             elif isinstance(segment, Link):
                 return await self.call_json_api(
-                    "/message/custom/send",
+                    "/cgi-bin/message/custom/send",
                     json={
                         "touser": user_id,
                         "msgtype": "link",
@@ -218,12 +254,26 @@ class Bot(BaseBot):
                 if segment.data["thumb_media_id"]:
                     media_id = segment.data["thumb_media_id"]
                 elif segment.data["thumb_media"]:
-                    media_id = await self.upload_temp_media(File(file=segment.data["thumb_media"], file_type="image", file_name="nonebot_upload.png"))
+                    media_id = await self.upload_temp_media(
+                        File(
+                            file=segment.data["thumb_media"],
+                            file_type="image",
+                            file_name="nonebot_upload.png",
+                        )
+                    )
                 elif segment.data["thumb_media_path"]:
                     file_path = cast(Path, segment.data["thumb_media_path"])
-                    media_id = await self.upload_temp_media(File(file_path=file_path, file_type="image", file_name="nonebot_upload.png"))
+                    media_id = await self.upload_temp_media(
+                        File(
+                            file_path=file_path,
+                            file_type="image",
+                            file_name="nonebot_upload.png",
+                        )
+                    )
                 else:
-                    raise ValueError("At least one of `thumb_media_id`, `thumb_media`, `thumb_media_path` is required")
+                    raise ValueError(
+                        "At least one of `thumb_media_id`, `thumb_media`, `thumb_media_path` is required"
+                    )
 
                 data = {
                     "title": segment.data["title"],
@@ -232,11 +282,12 @@ class Bot(BaseBot):
                 }
 
                 return await self.call_json_api(
-                    "/message/custom/send",
+                    "/cgi-bin/message/custom/send",
                     json={
                         "touser": user_id,
                         "msgtype": "miniprogrampage",
-                        "miniprogrampage": data | {
+                        "miniprogrampage": data
+                        | {
                             "appid": segment.data["appid"],
                         },
                     },
@@ -245,15 +296,29 @@ class Bot(BaseBot):
                 if segment.data["media_id"]:
                     media_id = segment.data["media_id"]
                 elif segment.data["file"]:
-                    media_id = await self.upload_temp_media(File(file=segment.data["file"], file_type="voice", file_name="nonebot_upload.amr"))
+                    media_id = await self.upload_temp_media(
+                        File(
+                            file=segment.data["file"],
+                            file_type="voice",
+                            file_name="nonebot_upload.amr",
+                        )
+                    )
                 elif segment.data["file_path"]:
                     file_path = cast(Path, segment.data["file_path"])
-                    media_id = await self.upload_temp_media(File(file_path=file_path, file_type="voice", file_name="nonebot_upload.amr"))
+                    media_id = await self.upload_temp_media(
+                        File(
+                            file_path=file_path,
+                            file_type="voice",
+                            file_name="nonebot_upload.amr",
+                        )
+                    )
                 else:
-                    raise ValueError("At least one of `media_id`, `file`, `file_path` is required")
+                    raise ValueError(
+                        "At least one of `media_id`, `file`, `file_path` is required"
+                    )
 
                 return await self.call_json_api(
-                    "/message/custom/send",
+                    "/cgi-bin/message/custom/send",
                     json={
                         "touser": user_id,
                         "msgtype": "voice",
@@ -266,15 +331,25 @@ class Bot(BaseBot):
                 if segment.data["media_id"]:
                     media_id = segment.data["media_id"]
                 elif segment.data["file"]:
-                    media_id = await self.upload_temp_media(File(file=segment.data["file"], file_type="video", file_name="nonebot_upload.mp4"))
+                    media_id = await self.upload_temp_media(
+                        File(
+                            file=segment.data["file"],
+                            file_type="video",
+                            file_name="nonebot_upload.mp4",
+                        )
+                    )
                 elif segment.data["file_path"]:
                     file_path = cast(Path, segment.data["file_path"])
-                    media_id = await self.upload_temp_media(File(file_path=file_path, file_type="video"))
+                    media_id = await self.upload_temp_media(
+                        File(file_path=file_path, file_type="video")
+                    )
                 else:
-                    raise ValueError("At least one of `media_id`, `file`, `file_path` is required")
+                    raise ValueError(
+                        "At least one of `media_id`, `file`, `file_path` is required"
+                    )
 
                 return await self.call_json_api(
-                    "/message/custom/send",
+                    "/cgi-bin/message/custom/send",
                     json={
                         "touser": user_id,
                         "msgtype": "video",
@@ -289,8 +364,10 @@ class Bot(BaseBot):
             else:
                 raise NotImplementedError()
 
-    async def reply_message(self, event: Type[Event], message: Message | MessageSegment | str) -> None:
-        """ 公众号被动回复 [微信文档](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Passive_user_reply_message.html)
+    async def reply_message(
+        self, event: Type[Event], message: Message | MessageSegment | str
+    ) -> None:
+        """公众号被动回复 [微信文档](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Passive_user_reply_message.html)
 
         注意：
         - 需要在5秒内回复\n
@@ -314,14 +391,14 @@ class Bot(BaseBot):
         MSG = "Passive replies have a shorter time limit, please upload in advance and use media_id"
 
         if len(message) > 1:
-            log("WARNING", "Passive replies can only reply once, only the first message will be sent")
+            log(
+                "WARNING",
+                "Passive replies can only reply once, only the first message will be sent",
+            )
 
         segment = message[0]
         if isinstance(segment, Text):
-            resp |= {
-                "MsgType": "text",
-                "Content": segment.data["text"]
-            }
+            resp |= {"MsgType": "text", "Content": segment.data["text"]}
 
         elif isinstance(segment, Image):
             if segment.data["media_id"]:
@@ -333,7 +410,7 @@ class Bot(BaseBot):
                 "MsgType": "image",
                 "Image": {
                     "MediaId": media_id,
-                }
+                },
             }
 
         elif isinstance(segment, Voice):
@@ -346,7 +423,7 @@ class Bot(BaseBot):
                 "MsgType": "voice",
                 "Voice": {
                     "MediaId": media_id,
-                }
+                },
             }
 
         elif isinstance(segment, Video):
@@ -361,7 +438,7 @@ class Bot(BaseBot):
                     "MediaId": media_id,
                     "Title": segment.data["title"],
                     "Description": segment.data["description"],
-                }
+                },
             }
 
         else:
@@ -371,8 +448,10 @@ class Bot(BaseBot):
             event_id=event.get_event_id(),
             resp=Response(
                 status_code=200,
-                content=unparse({
-                    "xml": resp,
-                })
-            )
+                content=unparse(
+                    {
+                        "xml": resp,
+                    }
+                ),
+            ),
         )
