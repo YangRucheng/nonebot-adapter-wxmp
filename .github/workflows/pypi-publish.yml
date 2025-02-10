@@ -1,6 +1,10 @@
 name: 发布 Pyhton 包到 PyPIs
 
-on: push
+on:
+  push:
+    branches: [main]
+    paths: [pyproject.toml]
+  workflow_dispatch:
 
 jobs:
   build-and-publish:
