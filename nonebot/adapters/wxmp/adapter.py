@@ -101,20 +101,21 @@ class Adapter(BaseAdapter):
                         handle_func=self._handle_verify,
                     )
                 )
-            if not (bot := self.bots.get(bot_info.appid, None)):
-                bot = Bot(
-                    self,
-                    self_id=bot_info.appid,
-                    bot_info=bot_info,
-                    official_timeout=self.wxmp_config.wxmp_official_timeout,
-                )
-                
-                @self.on_ready
-                async def _():
-                    self.bot_connect(bot)
-                    log("INFO", f"<y>Bot {escape_tag(bot_info.appid)}</y> connected")
 
         self.driver.on_shutdown(self.shutdown)
+
+        @self.on_ready
+        async def _():
+            for bot_info in self.wxmp_config.wxmp_bots:
+                if not (bot := self.bots.get(bot_info.appid, None)):
+                    bot = Bot(
+                        self,
+                        self_id=bot_info.appid,
+                        bot_info=bot_info,
+                        official_timeout=self.wxmp_config.wxmp_official_timeout,
+                    )
+                    self.bot_connect(bot)
+                    log("INFO", f"<y>Bot {escape_tag(bot_info.appid)}</y> connected")
 
     async def shutdown(self) -> None:
         """关闭 Adapter"""
@@ -152,21 +153,21 @@ class Adapter(BaseAdapter):
         if not bot:
             return Response(404, content="Bot not found")
 
-        if request.content:
-            concat_string: str = "".join(sorted([bot.bot_info.token, timestamp, nonce]))
-            sha1_signature = hashlib.sha1(concat_string.encode("utf-8")).hexdigest()
-            if not secrets.compare_digest(sha1_signature, signature):
-                return Response(403, content="Invalid signature")
-            else:
-                if bot.bot_info.callback:  # 转发事件推送到指定 URL
-                    await self._callback(bot.bot_info.callback, request)
-
-                payload: dict = self.parse_body(request.content)
-                return await self.dispatch_event(
-                    bot, payload, self.wxmp_config.wxmp_official_timeout
-                )
-        else:
+        if not request.content:
             return Response(400, content="Invalid request body")
+
+        concat_string: str = "".join(sorted([bot.bot_info.token, timestamp, nonce]))
+        sha1_signature = hashlib.sha1(concat_string.encode("utf-8")).hexdigest()
+        if not secrets.compare_digest(sha1_signature, signature):
+            return Response(403, content="Invalid signature")
+
+        if bot.bot_info.callback:  # 转发事件推送到指定 URL
+            await self._callback(bot.bot_info.callback, request)
+
+        payload: dict = self.parse_body(request.content)
+        return await self.dispatch_event(
+            bot, payload, self.wxmp_config.wxmp_official_timeout
+        )
 
     async def dispatch_event(self, bot: Bot, payload: dict, timeout: float) -> Response:
         """分发事件
