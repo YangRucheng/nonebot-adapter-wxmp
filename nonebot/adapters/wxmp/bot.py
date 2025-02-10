@@ -125,6 +125,9 @@ class Bot(BaseBot):
 
         res: dict = json.loads(resp.content)
 
+        if res.get("errcode", res.get("errCode", 0)) != 0:
+            raise ActionFailed(resp)
+
         self._expires_in = now + cast(int, res["expires_in"])
         self._access_token = cast(str, res["access_token"])
         return self._access_token
