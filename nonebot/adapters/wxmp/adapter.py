@@ -108,8 +108,11 @@ class Adapter(BaseAdapter):
                     bot_info=bot_info,
                     official_timeout=self.wxmp_config.wxmp_official_timeout,
                 )
-                self.bot_connect(bot)
-                log("INFO", f"<y>Bot {escape_tag(bot_info.appid)}</y> connected")
+                
+                @self.on_ready
+                async def _():
+                    self.bot_connect(bot)
+                    log("INFO", f"<y>Bot {escape_tag(bot_info.appid)}</y> connected")
 
         self.driver.on_shutdown(self.shutdown)
 
