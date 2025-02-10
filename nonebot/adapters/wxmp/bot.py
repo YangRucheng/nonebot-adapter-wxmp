@@ -65,7 +65,7 @@ class Bot(BaseBot):
         self._expires_in: Optional[int] = None
 
     @override
-    def __getattr__(self, name: str) -> "_ApiCall":
+    def __getattr__(self, name: str, **data: Any) -> "_ApiCall":
         """动态调用微信公众平台 API
 
         调用示例：
@@ -73,7 +73,7 @@ class Bot(BaseBot):
         message_custom_typing -> /cgi-bin/message/custom/typing
         """
         path = "/".join(name.strip("_").split("_"))
-        return partial(self.call_json_api, f"/cgi-bin/{path}")
+        return partial(self.call_json_api, f"/cgi-bin/{path}", **data)
 
     @override
     async def send(
