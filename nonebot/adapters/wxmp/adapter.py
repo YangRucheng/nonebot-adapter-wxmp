@@ -1,41 +1,41 @@
+import json
+from typing import Any, ClassVar, Optional
 import asyncio
 import hashlib
-import json
 import secrets
-from typing import Any, ClassVar
 from urllib.parse import urljoin
-
-import xmltodict
-from pydantic import ValidationError
 from typing_extensions import override
-from nonebot.compat import PYDANTIC_V2
+
 from yarl import URL
+from pydantic import ValidationError
+import xmltodict
 
 from nonebot import get_plugin_config
-from nonebot.adapters import Adapter as BaseAdapter
+from nonebot.utils import escape_tag
+from nonebot.compat import PYDANTIC_V2
 from nonebot.drivers import (
-    ASGIMixin,
     Driver,
-    HTTPClientMixin,
-    HTTPServerSetup,
     Request,
     Response,
+    ASGIMixin,
+    HTTPClientMixin,
+    HTTPServerSetup,
 )
-from nonebot.utils import escape_tag
+from nonebot.adapters import Adapter as BaseAdapter
 
 from .bot import Bot
-from .config import Config
 from .event import (
-    MINIPROGRAM_EVENT_CLASSES,
     OFFICIAL_EVENT_CLASSES,
+    MINIPROGRAM_EVENT_CLASSES,
     Event,
 )
+from .store import OfficialReplyResult
+from .utils import log
+from .config import Config
 from .exception import (
     ActionFailed,
     UnkonwnEventError,
 )
-from .store import OfficialReplyResult
-from .utils import log
 
 
 class Adapter(BaseAdapter):
@@ -266,7 +266,7 @@ class Adapter(BaseAdapter):
     async def _call_api(self, bot: Bot, api: str, **data: Any) -> Response:
         """调用微信公众平台 API"""
         access_token = await bot.get_access_token()
-        body: Any | None = data.get("json", data.get("data", data.get("body", None)))
+        body: Optional[Any] = data.get("json", data.get("data", data.get("body", None)))
 
         request = Request(
             method=data.get("method", "POST"),

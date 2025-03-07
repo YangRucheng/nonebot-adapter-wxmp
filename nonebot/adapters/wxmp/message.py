@@ -1,10 +1,11 @@
 import re
 from enum import Enum
+from typing import TYPE_CHECKING, Type, Union, Optional, TypedDict, cast
 from pathlib import Path
-from typing import TYPE_CHECKING, Iterable, Optional, Type, TypedDict, Union, cast
+from collections.abc import Iterable
+from typing_extensions import override
 
 from pydantic import HttpUrl
-from typing_extensions import override
 
 from nonebot.adapters import (
     Message as BaseMessage,
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
 
 
 class MessageSegment(BaseMessageSegment["Message"]):
-    """ 消息段 """
+    """消息段"""
 
     @classmethod
     @override
@@ -42,7 +43,7 @@ class MessageSegment(BaseMessageSegment["Message"]):
         cls,
         text: str,
     ) -> "Text":
-        """ 文本消息段
+        """文本消息段
 
         参数：
         - `text` 文本内容
@@ -57,7 +58,7 @@ class MessageSegment(BaseMessageSegment["Message"]):
         file_url: Optional[HttpUrl] = None,
         media_id: Optional[str] = None,
     ) -> "Image":
-        """ 图片消息段
+        """图片消息段
 
         参数：
         - `file` 图片文件的二进制数据
@@ -66,14 +67,19 @@ class MessageSegment(BaseMessageSegment["Message"]):
         - `media_id` 微信公众平台 MediaID
         """
         if not file and not file_path and not file_url and not media_id:
-            raise ValueError("At least one of `file`, `file_path`, `file_url`, `media_id` is required")
+            raise ValueError(
+                "At least one of `file`, `file_path`, `file_url`, `media_id` is required"
+            )
 
-        return Image("image", {
-            "file": file,
-            "file_path": file_path,
-            "file_url": file_url,
-            "media_id": media_id,
-        })
+        return Image(
+            "image",
+            {
+                "file": file,
+                "file_path": file_path,
+                "file_url": file_url,
+                "media_id": media_id,
+            },
+        )
 
     @classmethod
     def link(
@@ -83,7 +89,7 @@ class MessageSegment(BaseMessageSegment["Message"]):
         url: str,
         thumb_url: Optional[str] = None,
     ) -> "Link":
-        """ 链接消息段
+        """链接消息段
 
         参数：
         - `title` 标题
@@ -91,12 +97,15 @@ class MessageSegment(BaseMessageSegment["Message"]):
         - `url` 网页链接 URL
         - `thumb_url` 缩略图 URL
         """
-        return Link("link", {
-            "title": title,
-            "description": description,
-            "url": url,
-            "thumb_url": thumb_url,
-        })
+        return Link(
+            "link",
+            {
+                "title": title,
+                "description": description,
+                "url": url,
+                "thumb_url": thumb_url,
+            },
+        )
 
     @classmethod
     def miniprogrampage(
@@ -109,7 +118,7 @@ class MessageSegment(BaseMessageSegment["Message"]):
         thumb_media_id: Optional[str] = None,
         appid: Optional[str] = None,
     ) -> "Miniprogrampage":
-        """ 小程序卡片消息段
+        """小程序卡片消息段
 
         参数：
         - `title` 标题
@@ -120,15 +129,18 @@ class MessageSegment(BaseMessageSegment["Message"]):
         - `thumb_media_id` 微信公众平台 MediaID
         - `appid` 小程序 AppID （小程序留空，公众号必须填与公众号关联的小程序 AppID）
         """
-        return Miniprogrampage("miniprogrampage", {
-            "title": title,
-            "page_path": page_path,
-            "thumb_media": thumb_media,
-            "thumb_url": thumb_url,
-            "thumb_media_path": thumb_media_path,
-            "thumb_media_id": thumb_media_id,
-            "appid": appid,
-        })
+        return Miniprogrampage(
+            "miniprogrampage",
+            {
+                "title": title,
+                "page_path": page_path,
+                "thumb_media": thumb_media,
+                "thumb_url": thumb_url,
+                "thumb_media_path": thumb_media_path,
+                "thumb_media_id": thumb_media_id,
+                "appid": appid,
+            },
+        )
 
     @classmethod
     def voice(
@@ -138,7 +150,7 @@ class MessageSegment(BaseMessageSegment["Message"]):
         media_id: Optional[str] = None,
         format: Optional[str] = None,
     ) -> "Voice":
-        """ 语音消息段
+        """语音消息段
 
         参数：
         - `file` 语音文件的二进制数据
@@ -146,12 +158,15 @@ class MessageSegment(BaseMessageSegment["Message"]):
         - `media_id` 微信公众平台 MediaID
         - `format` 语音格式
         """
-        return Voice("voice", {
-            "file": file,
-            "file_path": file_path,
-            "media_id": media_id,
-            "format": format,
-        })
+        return Voice(
+            "voice",
+            {
+                "file": file,
+                "file_path": file_path,
+                "media_id": media_id,
+                "format": format,
+            },
+        )
 
     @classmethod
     def video(
@@ -165,7 +180,7 @@ class MessageSegment(BaseMessageSegment["Message"]):
         title: str = "",
         description: str = "",
     ) -> "Video":
-        """ 视频消息段
+        """视频消息段
 
         参数：
         - `file` 视频文件的二进制数据
@@ -177,16 +192,19 @@ class MessageSegment(BaseMessageSegment["Message"]):
         - `title` 视频标题
         - `description` 视频描述
         """
-        return Video("video", {
-            "file": file,
-            "file_path": file_path,
-            "media_id": media_id,
-            "thumb": thumb,
-            "thumb_path": thumb_path,
-            "thumb_media_id": thumb_media_id,
-            "title": title,
-            "description": description,
-        })
+        return Video(
+            "video",
+            {
+                "file": file,
+                "file_path": file_path,
+                "media_id": media_id,
+                "thumb": thumb,
+                "thumb_path": thumb_path,
+                "thumb_media_id": thumb_media_id,
+                "title": title,
+                "description": description,
+            },
+        )
 
     @classmethod
     def location(
@@ -196,7 +214,7 @@ class MessageSegment(BaseMessageSegment["Message"]):
         scale: int,
         label: str,
     ) -> "Location":
-        """ 位置消息段
+        """位置消息段
 
         参数：
         - `location_x` 地理位置纬度
@@ -204,26 +222,32 @@ class MessageSegment(BaseMessageSegment["Message"]):
         - `scale` 地图缩放比例
         - `label` 地理位置信息
         """
-        return Location("location", {
-            "location_x": location_x,
-            "location_y": location_y,
-            "scale": scale,
-            "label": label,
-        })
+        return Location(
+            "location",
+            {
+                "location_x": location_x,
+                "location_y": location_y,
+                "scale": scale,
+                "label": label,
+            },
+        )
 
     @classmethod
     def emjoy(
         cls,
         emjoy_type: "EmjoyType",
     ) -> "Emjoy":
-        """ 表情消息段
+        """表情消息段
 
         参数：
         - `emjoy` 表情类型
         """
-        return Emjoy("emjoy", {
-            "emjoy": emjoy_type,
-        })
+        return Emjoy(
+            "emjoy",
+            {
+                "emjoy": emjoy_type,
+            },
+        )
 
 
 class _TextData(TypedDict):
@@ -231,7 +255,8 @@ class _TextData(TypedDict):
 
 
 class Text(MessageSegment):
-    """ 文本 消息段 """
+    """文本 消息段"""
+
     data: _TextData
 
 
@@ -243,7 +268,8 @@ class _ImageData(TypedDict):
 
 
 class Image(MessageSegment):
-    """ 图片 消息段 """
+    """图片 消息段"""
+
     data: _ImageData
 
 
@@ -255,7 +281,8 @@ class _LinkData(TypedDict):
 
 
 class Link(MessageSegment):
-    """ 图文链接 消息段 """
+    """图文链接 消息段"""
+
     data: _LinkData
 
 
@@ -270,7 +297,8 @@ class _MiniProgramPageData(TypedDict):
 
 
 class Miniprogrampage(MessageSegment):
-    """ 小程序卡片 消息段 """
+    """小程序卡片 消息段"""
+
     data: _MiniProgramPageData
 
 
@@ -282,7 +310,8 @@ class _VoiceData(TypedDict):
 
 
 class Voice(MessageSegment):
-    """ 音频 消息段 """
+    """音频 消息段"""
+
     data: _VoiceData
 
 
@@ -298,7 +327,8 @@ class _VideoData(TypedDict):
 
 
 class Video(MessageSegment):
-    """ 视频 消息段 """
+    """视频 消息段"""
+
     data: _VideoData
 
 
@@ -310,15 +340,17 @@ class _LocationData(TypedDict):
 
 
 class Location(MessageSegment):
-    """ 位置 消息段 """
+    """位置 消息段"""
+
     data: _LocationData
 
 
 class EmjoyType(Enum):
-    """ 行内表情
+    """行内表情
 
     注意：这是人工测试出来的，官方没有对照表，更新可能不及时
     """
+
     微笑 = "/::)"
     撇嘴 = "/::~"
     色 = "/::B"
@@ -439,28 +471,30 @@ class _EmjoyData(TypedDict):
 
 
 class Emjoy(MessageSegment):
-    """ 表情（行内） 消息段 """
+    """表情（行内） 消息段"""
+
     data: _EmjoyData
 
 
 class Message(BaseMessage[MessageSegment]):
-    """ 消息 """
+    """消息"""
 
     @override
     @classmethod
     def get_segment_class(cls) -> Type[MessageSegment]:
-        """ 获取消息段类 """
+        """获取消息段类"""
         return MessageSegment
 
     @override
     @staticmethod
     def _construct(msg: str) -> Iterable[MessageSegment]:
-        """ 将文本消息构造成消息段数组 """
-        parts = re.split("({0})".format(
-            '|'.join(
-                re.escape(emjoy.value) for emjoy in EmjoyType if emjoy.value
-            )
-        ), msg)
+        """将文本消息构造成消息段数组"""
+        parts = re.split(
+            "({0})".format(
+                "|".join(re.escape(emjoy.value) for emjoy in EmjoyType if emjoy.value)
+            ),
+            msg,
+        )
         for part in parts:
             if not part:
                 continue
@@ -486,61 +520,67 @@ class Message(BaseMessage[MessageSegment]):
         )
 
     def extract_plain_text(self) -> str:
-        """ 提取消息中的纯文本 """
-        return "".join(
-            seg.data["text"]
-            for seg in self
-            if seg.type == "text"
-        )
+        """提取消息中的纯文本"""
+        return "".join(seg.data["text"] for seg in self if seg.type == "text")
 
     @classmethod
     def from_event(cls, event: type["MessageEvent"]) -> "Message":
-        """ 从消息事件转为消息序列 """
+        """从消息事件转为消息序列"""
         if event.message_type == "text":
             text = getattr(event, "content")
             message: list[Type[MessageSegment]] = list(cls._construct(text))
             return cls(message)
 
         elif event.message_type == "image":
-            return cls(MessageSegment.image(
-                media_id=getattr(event, "media_id"),
-                file_url=getattr(event, "pic_url"),
-            ))
+            return cls(
+                MessageSegment.image(
+                    media_id=getattr(event, "media_id"),
+                    file_url=getattr(event, "pic_url"),
+                )
+            )
 
         elif event.message_type == "miniprogrampage":
-            return cls(MessageSegment.miniprogrampage(
-                title=getattr(event, "title"),
-                page_path=getattr(event, "page_path"),
-                appid=getattr(event, "appid"),
-                thumb_media_id=getattr(event, "thumb_media_id"),
-                thumb_url=getattr(event, "thumb_url"),
-            ))
+            return cls(
+                MessageSegment.miniprogrampage(
+                    title=getattr(event, "title"),
+                    page_path=getattr(event, "page_path"),
+                    appid=getattr(event, "appid"),
+                    thumb_media_id=getattr(event, "thumb_media_id"),
+                    thumb_url=getattr(event, "thumb_url"),
+                )
+            )
 
         elif event.message_type == "video":
-            return cls(MessageSegment.video(
-                media_id=getattr(event, "media_id"),
-                thumb_media_id=getattr(event, "thumb_media_id"),
-            ))
+            return cls(
+                MessageSegment.video(
+                    media_id=getattr(event, "media_id"),
+                    thumb_media_id=getattr(event, "thumb_media_id"),
+                )
+            )
 
         elif event.message_type == "voice":
-            return cls(MessageSegment.voice(
-                media_id=getattr(event, "media_id"),
-                format=getattr(event, "format"),
-            ))
+            return cls(
+                MessageSegment.voice(
+                    media_id=getattr(event, "media_id"),
+                    format=getattr(event, "format"),
+                )
+            )
 
         elif event.message_type == "location":
-            return cls(MessageSegment.location(
-                location_x=float(getattr(event, "location_x")),
-                location_y=float(getattr(event, "location_y")),
-                scale=getattr(event, "scale"),
-                label=getattr(event, "label"),
-            ))
+            return cls(
+                MessageSegment.location(
+                    location_x=float(getattr(event, "location_x")),
+                    location_y=float(getattr(event, "location_y")),
+                    scale=getattr(event, "scale"),
+                    label=getattr(event, "label"),
+                )
+            )
 
         else:
             raise UnkonwnEventError(dict(event))
 
     def merge_segments(self) -> "Message":
-        """ 合并相邻的文本消息段，并转义行内表情 """
+        """合并相邻的文本消息段，并转义行内表情"""
         message: list[Type[MessageSegment]] = []
 
         for segm in self:

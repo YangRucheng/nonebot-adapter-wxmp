@@ -1,23 +1,25 @@
-from pathlib import Path
 from typing import Literal, Optional, cast, overload
+from pathlib import Path
 
 
-class File():
+class File:
     file_type: Literal["image", "voice", "video", "thumb"]
     file_name: str
     data: bytes
 
     @overload
-    def __init__(self, obj: "File"):
-        ...
+    def __init__(self, obj: "File"): ...
 
     @overload
-    def __init__(self, file: bytes, file_type: str, file_name: str):
-        ...
+    def __init__(self, file: bytes, file_type: str, file_name: str): ...
 
     @overload
-    def __init__(self, file_path: Path, file_type: Optional[str] = None, file_name: Optional[str] = None):
-        ...
+    def __init__(
+        self,
+        file_path: Path,
+        file_type: Optional[str] = None,
+        file_name: Optional[str] = None,
+    ): ...
 
     def __init__(self, **args):
         if obj := args.get("obj", None):

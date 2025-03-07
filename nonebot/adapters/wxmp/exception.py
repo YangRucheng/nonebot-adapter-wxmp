@@ -3,10 +3,10 @@ from typing import Optional
 
 from nonebot.drivers import Response
 from nonebot.exception import ActionFailed as BaseActionFailed
-from nonebot.exception import AdapterException
-from nonebot.exception import ApiNotAvailable as BaseApiNotAvailable
 from nonebot.exception import NetworkError as BaseNetworkError
 from nonebot.exception import NoLogException as BaseNoLogException
+from nonebot.exception import ApiNotAvailable as BaseApiNotAvailable
+from nonebot.exception import AdapterException
 
 
 class WxmpAdapterException(AdapterException):
@@ -35,11 +35,19 @@ class ActionFailed(BaseActionFailed, WxmpAdapterException):
 
     @property
     def code(self) -> Optional[int]:
-        return None if self.body is None else self.body.get("errcode", self.body.get("errCode", None))
+        return (
+            None
+            if self.body is None
+            else self.body.get("errcode", self.body.get("errCode", None))
+        )
 
     @property
     def msg(self) -> Optional[str]:
-        return None if self.body is None else self.body.get("errmsg", self.body.get("errMsg", None))
+        return (
+            None
+            if self.body is None
+            else self.body.get("errmsg", self.body.get("errMsg", None))
+        )
 
     @property
     def data(self) -> Optional[dict]:
@@ -75,7 +83,7 @@ class ApiNotAvailable(BaseApiNotAvailable, WxmpAdapterException):
 
 
 class UnkonwnEventError(WxmpAdapterException):
-    """ 未知事件 """
+    """未知事件"""
 
     def __init__(self, event: dict):
         self.event = event
@@ -88,6 +96,6 @@ class UnkonwnEventError(WxmpAdapterException):
 
 
 class OfficialReplyError(WxmpAdapterException):
-    """ 公众号被动回复错误 \n
+    """公众号被动回复错误 \n
     超时 / 已经回复过 / 不支持的类型
     """

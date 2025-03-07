@@ -4,10 +4,39 @@ version = "0.1.4"
 description = "Nonebot2 Adapter for Weixin Official Accounts Platform"
 authors = [{ name = "YangRucheng", email = "admin@yangrucheng.top" }]
 dependencies = ["nonebot2>=2.3.0", "xmltodict>=0.14.0"]
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 readme = "README.md"
 license = { text = "MIT" }
 
 [project.urls]
 homepage = "https://github.com/YangRucheng/nonebot-adapter-wxmp"
 repository = "https://github.com/YangRucheng/nonebot-adapter-wxmp"
+
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+
+[tool.ruff.format]
+line-ending = "lf"
+
+[tool.ruff.lint]
+ignore = [
+    "E402",   # module-import-not-at-top-of-file
+    "UP037",  # quoted-annotation
+    "PYI021", # docstring-in-stub
+    "RUF001", # ambiguous-unicode-character-string
+    "RUF002", # ambiguous-unicode-character-docstring
+    "RUF003", # ambiguous-unicode-character-comment
+    "E501",   # line-too-long
+    "UP007",  # double-quoted-string-with-single-quote
+]
+
+[tool.ruff.lint.isort]
+length-sort = true
+force-sort-within-sections = true
+extra-standard-library = ["typing_extensions"]
+
+[tool.ruff.lint.flake8-pytest-style]
+fixture-parentheses = false
+mark-parentheses = false

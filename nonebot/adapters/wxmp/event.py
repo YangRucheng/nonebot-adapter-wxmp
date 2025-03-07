@@ -1,12 +1,12 @@
-import datetime
 import random
 from typing import Literal, Optional
-
-from pydantic import ConfigDict, Field
+import datetime
 from typing_extensions import override
 
-from nonebot.adapters import Event as BaseEvent
+from pydantic import Field, ConfigDict
+
 from nonebot.compat import model_dump
+from nonebot.adapters import Event as BaseEvent
 
 from .message import Message
 
@@ -18,10 +18,12 @@ class Event(BaseEvent):
     """ 发送者的 OpenId `FromUserName` """
     timestamp: int = Field(alias="CreateTime")
     """ 消息发送时间戳 `CreateTime` """
-    message_type: Literal["event", "text", "image", "miniprogrampage", "video", "location", "voice"] = Field(alias="MsgType")
+    message_type: Literal[
+        "event", "text", "image", "miniprogrampage", "video", "location", "voice"
+    ] = Field(alias="MsgType")
     """ 消息类型 `MsgType` """
 
-    model_config = ConfigDict(extra='ignore')
+    model_config = ConfigDict(extra="ignore")
 
     @property
     def time(self) -> datetime.datetime:
@@ -29,7 +31,7 @@ class Event(BaseEvent):
 
     @override
     def is_tome(self) -> bool:
-        """ 平台只有私聊，所以直接返回 True """
+        """平台只有私聊，所以直接返回 True"""
         return True
 
     @override
@@ -57,16 +59,19 @@ class Event(BaseEvent):
         return f"{self.user_id}_{self.to_user_id}"
 
     def get_event_id(self) -> str:
-        """ 随机生成 event_id """
+        """随机生成 event_id"""
         if event_id := getattr(self, "_event_id", None):
             return event_id
         else:
-            self._event_id = f"{self.get_session_id()}_{random.randint(int(10e5), int(10e20))}"
+            self._event_id = (
+                f"{self.get_session_id()}_{random.randint(int(10e5), int(10e20))}"
+            )
             return self._event_id
 
 
 class NoticeEvent(Event):
-    """ 通知事件 """
+    """通知事件"""
+
     event: str = Field(default=None, alias="Event")
     """ 事件类型 `Event` """
 
@@ -80,8 +85,11 @@ class NoticeEvent(Event):
 
 
 class MessageEvent(Event):
-    """ 消息事件 """
-    message_type: Literal["text", "image", "miniprogrampage", "video", "location", "voice"] = Field(alias="MsgType")
+    """消息事件"""
+
+    message_type: Literal[
+        "text", "image", "miniprogrampage", "video", "location", "voice"
+    ] = Field(alias="MsgType")
     """ 消息类型 `MsgType` """
     message_id: int = Field(alias="MsgId")
     """ 消息 ID `MsgId` """
@@ -108,20 +116,28 @@ class MessageEvent(Event):
 
     @override
     def get_event_description(self) -> str:
-        keys = ('to_user_id', 'user_id', 'time', 'message_type', 'message_id', 'message')
+        keys = (
+            "to_user_id",
+            "user_id",
+            "time",
+            "message_type",
+            "message_id",
+            "message",
+        )
         return str({key: getattr(self, key) for key in keys})
 
 
 class MiniprogramEvent(Event):
-    """ 小程序事件 """
+    """小程序事件"""
 
 
 class OfficalEvent(Event):
-    """ 公众号事件 """
+    """公众号事件"""
 
 
 class UserEnterEvent(MiniprogramEvent, NoticeEvent):
-    """ 用户进入客服会话事件 """
+    """用户进入客服会话事件"""
+
     message_type: Literal["event"] = Field(alias="MsgType")
     event: Literal["user_enter_tempsession"] = Field(alias="Event")
     session_from: str = Field(alias="SessionFrom")
@@ -133,7 +149,8 @@ class UserEnterEvent(MiniprogramEvent, NoticeEvent):
 
 
 class AuthorizationChangeEvent(NoticeEvent):
-    """ 授权用户信息变更事件 """
+    """授权用户信息变更事件"""
+
     message_type: Literal["event"] = Field(alias="MsgType")
     """ 消息类型 `MsgType` """
     event: Literal["user_authorization_revoke"] = Field(alias="Event")
@@ -147,7 +164,8 @@ class AuthorizationChangeEvent(NoticeEvent):
 
 
 class KfCloseSessionEvent(MiniprogramEvent, NoticeEvent):
-    """ 客服关闭会话事件 """
+    """客服关闭会话事件"""
+
     message_type: Literal["event"] = Field(alias="MsgType")
     event: Literal["kf_close_session"] = Field(alias="Event")
     kf_account: str = Field(alias="KfAccount")
@@ -186,7 +204,8 @@ class MiniprogramPathMessageEvent(MiniprogramEvent, MessageEvent):
 
 
 class SubscribeEvent(OfficalEvent, NoticeEvent):
-    """ 公众号 用户关注事件 """
+    """公众号 用户关注事件"""
+
     message_type: Literal["event"] = Field(alias="MsgType")
     event: Literal["subscribe"] = Field(alias="Event")
 
@@ -197,13 +216,15 @@ class SubscribeEvent(OfficalEvent, NoticeEvent):
 
 
 class UnSubscribeEvent(OfficalEvent, NoticeEvent):
-    """ 公众号 用户取消关注事件 """
+    """公众号 用户取消关注事件"""
+
     message_type: Literal["event"] = Field(alias="MsgType")
     event: Literal["unsubscribe"] = Field(alias="Event")
 
 
 class MenuClickEvent(OfficalEvent, NoticeEvent):
-    """ 公众号 菜单点击事件 """
+    """公众号 菜单点击事件"""
+
     message_type: Literal["event"] = Field(alias="MsgType")
     event: Literal["CLICK"] = Field(alias="Event")
 
@@ -212,7 +233,8 @@ class MenuClickEvent(OfficalEvent, NoticeEvent):
 
 
 class VedioMessageEvent(OfficalEvent, MessageEvent):
-    """ 公众号 视频消息事件 """
+    """公众号 视频消息事件"""
+
     message_type: Literal["video"] = Field(alias="MsgType")
 
     media_id: str = Field(alias="MediaId")
@@ -222,7 +244,8 @@ class VedioMessageEvent(OfficalEvent, MessageEvent):
 
 
 class LocationEvent(OfficalEvent, MessageEvent):
-    """ 公众号 地理位置消息事件 """
+    """公众号 地理位置消息事件"""
+
     message_type: Literal["location"] = Field(alias="MsgType")
 
     location_x: str = Field(alias="Location_X")
@@ -236,7 +259,8 @@ class LocationEvent(OfficalEvent, MessageEvent):
 
 
 class VoiceMessageEvent(OfficalEvent, MessageEvent):
-    """ 公众号 语音消息事件 """
+    """公众号 语音消息事件"""
+
     message_type: Literal["voice"] = Field(alias="MsgType")
 
     media_id: str = Field(alias="MediaId")
@@ -282,7 +306,6 @@ __all__ = [
     "MessageEvent",
     "MiniprogramEvent",
     "OfficalEvent",
-
     "UserEnterEvent",
     "AuthorizationChangeEvent",
     "KfCloseSessionEvent",
@@ -295,7 +318,6 @@ __all__ = [
     "VedioMessageEvent",
     "LocationEvent",
     "VoiceMessageEvent",
-
     "MINIPROGRAM_EVENT_CLASSES",
     "OFFICIAL_EVENT_CLASSES",
     "MESSAGE_EVENT_CLASSES",

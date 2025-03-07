@@ -9,6 +9,7 @@ tmp
 *.sh
 docker.sh
 *.csv
+.vscode
 *.jpg
 
 ci.config.js

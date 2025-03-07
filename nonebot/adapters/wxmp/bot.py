@@ -1,39 +1,39 @@
 import json
 import time
-from functools import partial
-from pathlib import Path
 from typing import (
     TYPE_CHECKING,
     Any,
+    Union,
     Literal,
     Optional,
     Protocol,
-    Union,
     cast,
 )
+from pathlib import Path
+from functools import partial
 from typing_extensions import override
 
 from xmltodict import unparse
 
-from nonebot.adapters import Bot as BaseBot
 from nonebot.drivers import Request, Response
 from nonebot.message import handle_event
+from nonebot.adapters import Bot as BaseBot
 
-from .config import BotInfo
-from .event import Event
-from .exception import ActionFailed, OfficialReplyError
 from .file import File
+from .event import Event
+from .utils import log
+from .config import BotInfo
 from .message import (
-    Image,
     Link,
+    Text,
+    Image,
+    Video,
+    Voice,
     Message,
     MessageSegment,
     Miniprogrampage,
-    Text,
-    Video,
-    Voice,
 )
-from .utils import log
+from .exception import ActionFailed, OfficialReplyError
 
 if TYPE_CHECKING:
     from .adapter import Adapter
@@ -192,8 +192,8 @@ class Bot(BaseBot):
         return resp.content
 
     async def send_custom_message(
-        self, user_id: str, message: Message | MessageSegment | str
-    ) -> dict | None:
+        self, user_id: str, message: Union[Message, MessageSegment, str]
+    ) -> Optional[dict]:
         """发送 客服消息
 
         注意：
@@ -389,7 +389,7 @@ class Bot(BaseBot):
                 raise NotImplementedError()
 
     async def reply_message(
-        self, event: Event, message: Message | MessageSegment | str
+        self, event: Event, message: Union[Message, MessageSegment, str]
     ) -> None:
         """公众号被动回复 [微信文档](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Passive_user_reply_message.html)
 
