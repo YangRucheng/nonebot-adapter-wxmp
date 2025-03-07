@@ -131,7 +131,7 @@ class Adapter(BaseAdapter):
         self.tasks.clear()
 
     @classmethod
-    def parse_body(cls, data: str) -> dict:
+    def parse_body(cls, data: str | bytes) -> dict:
         """解析微信公众平台的事件数据"""
         try:
             return json.loads(data)

@@ -67,7 +67,7 @@ class Event(BaseEvent):
 
 class NoticeEvent(Event):
     """ 通知事件 """
-    event: str = Field(default=None, alias="Event")
+    event: str | None = Field(default=None, alias="Event")
     """ 事件类型 `Event` """
 
     @override
@@ -123,7 +123,7 @@ class OfficalEvent(Event):
 class UserEnterEvent(MiniprogramEvent, NoticeEvent):
     """ 用户进入客服会话事件 """
     message_type: Literal["event"] = Field(alias="MsgType")
-    event: Literal["user_enter_tempsession"] = Field(alias="Event")
+    event: Literal["user_enter_tempsession"] = Field(default="user_enter_tempsession", alias="Event")
     session_from: str = Field(alias="SessionFrom")
     """ 会话来源，开发者在客服会话按钮设置的 session-from 属性 """
 
@@ -132,11 +132,11 @@ class UserEnterEvent(MiniprogramEvent, NoticeEvent):
         return "notice"
 
 
-class AuthorizationChangeEvent(NoticeEvent):
+class AuthorizationChangeEvent(MiniprogramEvent, NoticeEvent):
     """ 授权用户信息变更事件 """
     message_type: Literal["event"] = Field(alias="MsgType")
     """ 消息类型 `MsgType` """
-    event: Literal["user_authorization_revoke"] = Field(alias="Event")
+    event: Literal["user_authorization_revoke"] = Field(default="user_authorization_revoke", alias="Event")
     """ 事件类型 `Event` """
     openid: str = Field(alias="OpenID")
     """ 用户 OpenID `OpenID` """
@@ -149,7 +149,7 @@ class AuthorizationChangeEvent(NoticeEvent):
 class KfCloseSessionEvent(MiniprogramEvent, NoticeEvent):
     """ 客服关闭会话事件 """
     message_type: Literal["event"] = Field(alias="MsgType")
-    event: Literal["kf_close_session"] = Field(alias="Event")
+    event: Literal["kf_close_session"] = Field(default="kf_close_session", alias="Event")
     kf_account: str = Field(alias="KfAccount")
     close_type: str = Field(alias="CloseType")
 
@@ -188,7 +188,7 @@ class MiniprogramPathMessageEvent(MiniprogramEvent, MessageEvent):
 class SubscribeEvent(OfficalEvent, NoticeEvent):
     """ 公众号 用户关注事件 """
     message_type: Literal["event"] = Field(alias="MsgType")
-    event: Literal["subscribe"] = Field(alias="Event")
+    event: Literal["subscribe"] = Field(default="subscribe", alias="Event")
 
     event_key: Optional[str] = Field(default=None, alias="EventKey")
     """ 带参数的公众号二维码，二维码的参数值 `EventKey` """
@@ -199,13 +199,13 @@ class SubscribeEvent(OfficalEvent, NoticeEvent):
 class UnSubscribeEvent(OfficalEvent, NoticeEvent):
     """ 公众号 用户取消关注事件 """
     message_type: Literal["event"] = Field(alias="MsgType")
-    event: Literal["unsubscribe"] = Field(alias="Event")
+    event: Literal["unsubscribe"] = Field(default="unsubscribe", alias="Event")
 
 
 class MenuClickEvent(OfficalEvent, NoticeEvent):
     """ 公众号 菜单点击事件 """
     message_type: Literal["event"] = Field(alias="MsgType")
-    event: Literal["CLICK"] = Field(alias="Event")
+    event: Literal["CLICK"] = Field(default="CLICK", alias="Event")
 
     event_key: str = Field(alias="EventKey")
     """ 事件KEY值，与自定义菜单接口中KEY值对应 `EventKey` """

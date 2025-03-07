@@ -37,7 +37,7 @@ class Bot(BaseBot):
     async def send(self, event: Event, message: Union[str, Message, MessageSegment], **kwargs) -> Any:
         ...
 
-    async def handle_event(self, event: Type[Event]):
+    async def handle_event(self, event: Event):
         ...
         
     async def get_access_token(self, force_refresh: bool = False) -> str:

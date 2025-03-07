@@ -9,7 +9,7 @@ class OfficialReplyResult:
     """ 公众号被动回复内容储存 """
 
     def __init__(self) -> None:
-        self._futures: dict[int, asyncio.Future] = {}
+        self._futures: dict[str, asyncio.Future] = {}
 
     def set_resp(self, event_id: str, resp: Response) -> None:
         """ 设置响应 """

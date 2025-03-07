@@ -494,11 +494,11 @@ class Message(BaseMessage[MessageSegment]):
         )
 
     @classmethod
-    def from_event(cls, event: type["MessageEvent"]) -> "Message":
+    def from_event(cls, event: MessageEvent) -> "Message":
         """ 从消息事件转为消息序列 """
         if event.message_type == "text":
             text = getattr(event, "content")
-            message: list[Type[MessageSegment]] = list(cls._construct(text))
+            message: list[MessageSegment] = list(cls._construct(text))
             return cls(message)
 
         elif event.message_type == "image":
@@ -541,7 +541,7 @@ class Message(BaseMessage[MessageSegment]):
 
     def merge_segments(self) -> "Message":
         """ 合并相邻的文本消息段，并转义行内表情 """
-        message: list[Type[MessageSegment]] = []
+        message: list[MessageSegment] = []
 
         for segm in self:
             if not len(message):
