@@ -21,7 +21,13 @@ _✨ 微信公众平台客服 协议适配 ✨_
 
 ## 安装
 
-PyPI 安装
+适配器安装
+
+```bash
+nb adapter install nonebot-adapter-wxmp
+```
+
+从PyPI 安装
 ```bash
 pip install nonebot-adapter-wxmp
 ```

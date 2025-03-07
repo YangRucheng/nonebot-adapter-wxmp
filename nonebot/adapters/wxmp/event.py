@@ -67,7 +67,7 @@ class Event(BaseEvent):
 
 class NoticeEvent(Event):
     """ 通知事件 """
-    event: str = Field(default=None, alias="Event")
+    event: str = Field(alias="Event")
     """ 事件类型 `Event` """
 
     @override
@@ -132,7 +132,7 @@ class UserEnterEvent(MiniprogramEvent, NoticeEvent):
         return "notice"
 
 
-class AuthorizationChangeEvent(NoticeEvent):
+class AuthorizationChangeEvent(MiniprogramEvent, NoticeEvent):
     """ 授权用户信息变更事件 """
     message_type: Literal["event"] = Field(alias="MsgType")
     """ 消息类型 `MsgType` """

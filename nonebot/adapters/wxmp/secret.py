@@ -5,7 +5,7 @@ import secrets
 from .utils import log
 
 try:
-    from Crypto.Cipher import AES
+    from Crypto.Cipher import AES   # type: ignore
 except ImportError:
     log("ERROR", "Please install nonebot-adapter-wxmp[crypto] to enable encrypt")
 
