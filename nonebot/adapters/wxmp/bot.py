@@ -8,11 +8,10 @@ from typing import (
     Literal,
     Optional,
     Protocol,
-    Type,
     Union,
     cast,
-    override,
 )
+from typing_extensions import override
 
 from xmltodict import unparse
 
@@ -98,7 +97,7 @@ class Bot(BaseBot):
                 user_id=event.get_user_id(), message=message
             )
 
-    async def handle_event(self, event: Type[Event]):
+    async def handle_event(self, event: Event):
         """处理事件"""
         await handle_event(self, event)
 
@@ -106,6 +105,7 @@ class Bot(BaseBot):
         """获取微信公众平台的 access_token"""
         now = int(time.time())
         if (self._expires_in or 0) > now:
+            assert self._access_token is not None
             return self._access_token
 
         request = Request(
@@ -120,7 +120,7 @@ class Bot(BaseBot):
         )
         resp = await self.adapter.request(request)
 
-        if resp.status_code != 200:
+        if resp.status_code != 200 or not resp.content:
             raise ActionFailed(resp)
 
         res: dict = json.loads(resp.content)
@@ -135,6 +135,9 @@ class Bot(BaseBot):
     async def call_json_api(self, api: str, **data: Any) -> dict:
         """调用微信公众平台 Json API"""
         resp: Response = await self.call_api(api=api, **data)
+        if not resp.content:
+            raise ActionFailed(resp)
+
         res: dict = json.loads(resp.content)
 
         if resp.status_code != 200 or res.get("errcode", res.get("errCode", 0)) != 0:
@@ -165,6 +168,8 @@ class Bot(BaseBot):
                 "media_id": media_id,
             },
         )
+        if resp.status_code != 200 or not resp.content or isinstance(resp.content, str):
+            raise ActionFailed(resp)
         return resp.content
 
     async def message_custom_typing(
@@ -182,11 +187,13 @@ class Bot(BaseBot):
     async def download_file(self, url: str) -> bytes:
         """下载文件"""
         resp: Response = await self.adapter.request(Request("GET", url))
+        if resp.status_code != 200 or not resp.content or isinstance(resp.content, str):
+            raise ActionFailed(resp)
         return resp.content
 
     async def send_custom_message(
         self, user_id: str, message: Message | MessageSegment | str
-    ) -> dict:
+    ) -> dict | None:
         """发送 客服消息
 
         注意：
@@ -382,7 +389,7 @@ class Bot(BaseBot):
                 raise NotImplementedError()
 
     async def reply_message(
-        self, event: Type[Event], message: Message | MessageSegment | str
+        self, event: Event, message: Message | MessageSegment | str
     ) -> None:
         """公众号被动回复 [微信文档](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Passive_user_reply_message.html)
 

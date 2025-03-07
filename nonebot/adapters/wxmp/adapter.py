@@ -8,6 +8,7 @@ from urllib.parse import urljoin
 import xmltodict
 from pydantic import ValidationError
 from typing_extensions import override
+from nonebot.compat import PYDANTIC_V2
 from yarl import URL
 
 from nonebot import get_plugin_config
@@ -148,9 +149,9 @@ class Adapter(BaseAdapter):
         nonce = url.query.get("nonce", "")
         signature = url.query.get("signature", "")
 
-        bot: Bot = self.bots.get(self._get_appid(url.path), None)
+        bot = self.bots.get(self._get_appid(url.path), None)
 
-        if not bot:
+        if not bot or not isinstance(bot, Bot):
             return Response(404, content="Bot not found")
 
         if not request.content:
@@ -162,7 +163,7 @@ class Adapter(BaseAdapter):
             return Response(403, content="Invalid signature")
 
         if bot.bot_info.callback:  # 转发事件推送到指定 URL
-            await self._callback(bot.bot_info.callback, request)
+            await self._callback(str(bot.bot_info.callback), request)
 
         payload: dict = self.parse_body(request.content)
         return await self.dispatch_event(
@@ -199,18 +200,24 @@ class Adapter(BaseAdapter):
         else:
             return Response(200, content="success")
 
-    def payload_to_event(self, bot: Bot, payload: dict) -> type[Event]:
+    def payload_to_event(self, bot: Bot, payload: dict) -> Event:
         """将微信公众平台的事件数据转换为 Event 对象"""
         if bot.bot_info.type == "miniprogram":
             for cls in MINIPROGRAM_EVENT_CLASSES:
                 try:
-                    return cls.model_validate(payload)
+                    if PYDANTIC_V2:
+                        return cls.model_validate(payload)
+                    else:
+                        return cls.validate(payload)
                 except ValidationError:
                     pass
         elif bot.bot_info.type == "official":
             for cls in OFFICIAL_EVENT_CLASSES:
                 try:
-                    return cls.model_validate(payload)
+                    if PYDANTIC_V2:
+                        return cls.model_validate(payload)
+                    else:
+                        return cls.validate(payload)
                 except ValidationError:
                     pass
         else:
@@ -225,9 +232,9 @@ class Adapter(BaseAdapter):
         timestamp = url.query.get("timestamp", "")
         nonce = url.query.get("nonce", "")
 
-        bot: Bot = self.bots.get(self._get_appid(url.path), None)
+        bot = self.bots.get(self._get_appid(url.path), None)
 
-        if not bot:
+        if not bot or not isinstance(bot, Bot):
             return Response(404, content="Bot not found")
 
         concat_string: str = "".join(sorted([timestamp, nonce, bot.bot_info.token]))
