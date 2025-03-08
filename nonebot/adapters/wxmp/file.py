@@ -1,5 +1,6 @@
 from pathlib import Path
-from typing import Literal, Optional, Union, TypeAlias, overload
+from typing import Literal, Optional, Union, overload
+from typing_extensions import TypeAlias
 
 FileType: TypeAlias = Literal["image", "voice", "video", "thumb"]
 
