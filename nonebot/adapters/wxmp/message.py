@@ -494,7 +494,7 @@ class Message(BaseMessage[MessageSegment]):
         )
 
     @classmethod
-    def from_event(cls, event: MessageEvent) -> "Message":
+    def from_event(cls, event: "MessageEvent") -> "Message":
         """ 从消息事件转为消息序列 """
         if event.message_type == "text":
             text = getattr(event, "content")
