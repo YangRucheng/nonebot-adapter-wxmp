@@ -11,3 +11,22 @@ license = { text = "MIT" }
 [project.urls]
 homepage = "https://github.com/YangRucheng/nonebot-adapter-wxmp"
 repository = "https://github.com/YangRucheng/nonebot-adapter-wxmp"
+
+[tool.pdm.dev-dependencies]
+i18n = ["babel ~=2.11"]
+dev = ["ruff~=0.6.0", "pre-commit~=3.1"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "UP", "C", "T", "PYI", "PT", "Q"]
+ignore = ["C901", "T201", "E402"]
+
+[tool.ruff.lint.flake8-pytest-style]
+fixture-parentheses = false
+mark-parentheses = false
+
+[dependency-groups]
+dev = ["ruff~=0.6.0"]
