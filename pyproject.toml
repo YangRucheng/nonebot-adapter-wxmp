@@ -1,10 +1,10 @@
 [project]
 name = "nonebot-adapter-wxmp"
-version = "0.1.5"
+version = "0.1.6"
 description = "Nonebot2 Adapter for Weixin Official Accounts Platform"
 authors = [{ name = "YangRucheng", email = "admin@yangrucheng.top" }]
 dependencies = ["nonebot2>=2.3.0", "xmltodict>=0.14.0"]
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 readme = "README.md"
 license = { text = "MIT" }
 
@@ -22,7 +22,18 @@ target-version = "py39"
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "UP", "C", "T", "PYI", "PT", "Q"]
-ignore = ["C901", "T201", "E402"]
+ignore = [
+    "C901",
+    "T201",
+    "E402",
+    "UP037",
+    "UP006",
+    "UP007",
+    "PYI020",
+    "PYI021",
+    "W293",
+    "UP035",
+]
 
 [tool.ruff.lint.flake8-pytest-style]
 fixture-parentheses = false

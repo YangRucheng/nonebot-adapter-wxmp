@@ -2,7 +2,7 @@ import asyncio
 import hashlib
 import json
 import secrets
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Union, Optional
 from urllib.parse import urljoin
 
 import xmltodict
@@ -131,7 +131,7 @@ class Adapter(BaseAdapter):
         self.tasks.clear()
 
     @classmethod
-    def parse_body(cls, data: str | bytes) -> dict:
+    def parse_body(cls, data: Union[bytes, str]) -> dict:
         """解析微信公众平台的事件数据"""
         try:
             return json.loads(data)
@@ -166,9 +166,7 @@ class Adapter(BaseAdapter):
             await self._callback(str(bot.bot_info.callback), request)
 
         payload: dict = self.parse_body(request.content)
-        return await self.dispatch_event(
-            bot, payload, self.wxmp_config.wxmp_official_timeout
-        )
+        return await self.dispatch_event(bot, payload, self.wxmp_config.wxmp_official_timeout)
 
     async def dispatch_event(self, bot: Bot, payload: dict, timeout: float) -> Response:
         """分发事件
@@ -189,9 +187,7 @@ class Adapter(BaseAdapter):
 
         if bot.bot_info.type == "official":
             try:
-                resp = await self._result.get_resp(
-                    event_id=event.get_event_id(), timeout=timeout
-                )
+                resp = await self._result.get_resp(event_id=event.get_event_id(), timeout=timeout)
             except asyncio.TimeoutError:
                 self._result.clear(event.get_event_id())
                 return Response(200, content="success")
@@ -266,7 +262,7 @@ class Adapter(BaseAdapter):
     async def _call_api(self, bot: Bot, api: str, **data: Any) -> Response:
         """调用微信公众平台 API"""
         access_token = await bot.get_access_token()
-        body: Any | None = data.get("json", data.get("data", data.get("body", None)))
+        body: Optional[Any] = data.get("json", data.get("data", data.get("body", None)))
 
         request = Request(
             method=data.get("method", "POST"),
@@ -276,9 +272,7 @@ class Adapter(BaseAdapter):
             }
             | data.get("params", {}),
             headers=data.get("headers", {}),
-            content=json.dumps(body, ensure_ascii=False).encode("utf-8")
-            if body
-            else None,
+            content=json.dumps(body, ensure_ascii=False).encode("utf-8") if body else None,
             files=data.get("files", None),
         )
         resp = await self.request(request)

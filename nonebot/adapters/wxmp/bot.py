@@ -82,20 +82,14 @@ class Bot(BaseBot):
         **kwargs,
     ) -> Any:
         """发送消息"""
-        if (
-            self.bot_info.type == "official" and not self.bot_info.approve
-        ):  # 未完成微信认证的公众号
+        if self.bot_info.type == "official" and not self.bot_info.approve:  # 未完成微信认证的公众号
             try:
                 return await self.reply_message(event=event, message=message)
             except OfficialReplyError:
-                return await self.send_custom_message(
-                    user_id=event.get_user_id(), message=message
-                )
+                return await self.send_custom_message(user_id=event.get_user_id(), message=message)
 
         else:  # 小程序、已认证的公众号 直接发客服消息
-            return await self.send_custom_message(
-                user_id=event.get_user_id(), message=message
-            )
+            return await self.send_custom_message(user_id=event.get_user_id(), message=message)
 
     async def handle_event(self, event: Event):
         """处理事件"""
@@ -172,9 +166,7 @@ class Bot(BaseBot):
             raise ActionFailed(resp)
         return resp.content
 
-    async def message_custom_typing(
-        self, command: Literal["Typing", "CancelTyping"], user_id: str
-    ) -> None:
+    async def message_custom_typing(self, command: Literal["Typing", "CancelTyping"], user_id: str) -> None:
         """设置用户输入状态"""
         await self.call_json_api(
             "/cgi-bin/message/custom/typing",
@@ -192,8 +184,8 @@ class Bot(BaseBot):
         return resp.content
 
     async def send_custom_message(
-        self, user_id: str, message: Message | MessageSegment | str
-    ) -> dict | None:
+        self, user_id: str, message: Union[Message, MessageSegment, str]
+    ) -> Optional[dict]:
         """发送 客服消息
 
         注意：
@@ -337,9 +329,7 @@ class Bot(BaseBot):
                         )
                     )
                 else:
-                    raise ValueError(
-                        "At least one of `media_id`, `file`, `file_path` is required"
-                    )
+                    raise ValueError("At least one of `media_id`, `file`, `file_path` is required")
 
                 return await self.call_json_api(
                     "/cgi-bin/message/custom/send",
@@ -364,13 +354,9 @@ class Bot(BaseBot):
                     )
                 elif segment.data["file_path"]:
                     file_path = cast(Path, segment.data["file_path"])
-                    media_id = await self.upload_temp_media(
-                        File(file_or_path=file_path, file_type="video")
-                    )
+                    media_id = await self.upload_temp_media(File(file_or_path=file_path, file_type="video"))
                 else:
-                    raise ValueError(
-                        "At least one of `media_id`, `file`, `file_path` is required"
-                    )
+                    raise ValueError("At least one of `media_id`, `file`, `file_path` is required")
 
                 return await self.call_json_api(
                     "/cgi-bin/message/custom/send",
@@ -388,9 +374,7 @@ class Bot(BaseBot):
             else:
                 raise NotImplementedError()
 
-    async def reply_message(
-        self, event: Event, message: Message | MessageSegment | str
-    ) -> None:
+    async def reply_message(self, event: Event, message: Union[Message, MessageSegment, str]) -> None:
         """公众号被动回复 [微信文档](https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Passive_user_reply_message.html)
 
         注意：
