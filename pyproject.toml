@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-adapter-wxmp"
-version = "0.1.6"
+version = "0.1.7"
 description = "Nonebot2 Adapter for Weixin Official Accounts Platform"
 authors = [{ name = "YangRucheng", email = "admin@yangrucheng.top" }]
 dependencies = ["nonebot2>=2.3.0", "xmltodict>=0.14.0"]
