@@ -224,7 +224,7 @@ class Bot(BaseBot):
                 elif segment.data["file"]:
                     media_id = await self.upload_temp_media(
                         File(
-                            file=segment.data["file"],
+                            file_or_path=segment.data["file"],
                             file_type="image",
                             file_name="nonebot_upload.png",
                         )
@@ -233,7 +233,7 @@ class Bot(BaseBot):
                     file_path = cast(Path, segment.data["file_path"])
                     media_id = await self.upload_temp_media(
                         File(
-                            file_path=file_path,
+                            file_or_path=file_path,
                             file_type="image",
                             file_name="nonebot_upload.png",
                         )
@@ -242,7 +242,7 @@ class Bot(BaseBot):
                     file_url = cast(str, segment.data["file_url"])
                     media_id = await self.upload_temp_media(
                         File(
-                            file=(await self.download_file(file_url)),
+                            file_or_path=(await self.download_file(file_url)),
                             file_type="image",
                             file_name="nonebot_upload.png",
                         )
@@ -280,7 +280,7 @@ class Bot(BaseBot):
                 elif segment.data["thumb_media"]:
                     media_id = await self.upload_temp_media(
                         File(
-                            file=segment.data["thumb_media"],
+                            file_or_path=segment.data["thumb_media"],
                             file_type="image",
                             file_name="nonebot_upload.png",
                         )
@@ -289,7 +289,7 @@ class Bot(BaseBot):
                     file_path = cast(Path, segment.data["thumb_media_path"])
                     media_id = await self.upload_temp_media(
                         File(
-                            file_path=file_path,
+                            file_or_path=file_path,
                             file_type="image",
                             file_name="nonebot_upload.png",
                         )
@@ -322,7 +322,7 @@ class Bot(BaseBot):
                 elif segment.data["file"]:
                     media_id = await self.upload_temp_media(
                         File(
-                            file=segment.data["file"],
+                            file_or_path=segment.data["file"],
                             file_type="voice",
                             file_name="nonebot_upload.amr",
                         )
@@ -331,7 +331,7 @@ class Bot(BaseBot):
                     file_path = cast(Path, segment.data["file_path"])
                     media_id = await self.upload_temp_media(
                         File(
-                            file_path=file_path,
+                            file_or_path=file_path,
                             file_type="voice",
                             file_name="nonebot_upload.amr",
                         )
@@ -357,7 +357,7 @@ class Bot(BaseBot):
                 elif segment.data["file"]:
                     media_id = await self.upload_temp_media(
                         File(
-                            file=segment.data["file"],
+                            file_or_path=segment.data["file"],
                             file_type="video",
                             file_name="nonebot_upload.mp4",
                         )
@@ -365,7 +365,7 @@ class Bot(BaseBot):
                 elif segment.data["file_path"]:
                     file_path = cast(Path, segment.data["file_path"])
                     media_id = await self.upload_temp_media(
-                        File(file_path=file_path, file_type="video")
+                        File(file_or_path=file_path, file_type="video")
                     )
                 else:
                     raise ValueError(
