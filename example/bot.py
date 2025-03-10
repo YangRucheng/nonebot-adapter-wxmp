@@ -14,5 +14,5 @@ nonebot.load_plugins("plugins")  # 本地插件
 
 if __name__ == "__main__":
     nonebot.run(
-        forwarded_allow_ips="*",
+        forwarded_allow_ips="172.16.0.0/12",
     )
