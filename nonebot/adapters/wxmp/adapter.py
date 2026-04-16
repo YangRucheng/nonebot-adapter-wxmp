@@ -180,6 +180,7 @@ class Adapter(BaseAdapter):
             event = self.payload_to_event(bot, payload)
         except Exception as e:
             log("WARNING", f"Failed to parse event {escape_tag(repr(payload))}", e)
+            return Response(200, content="success")
         else:
             task = asyncio.create_task(bot.handle_event(event=event))
             task.add_done_callback(self.tasks.discard)
